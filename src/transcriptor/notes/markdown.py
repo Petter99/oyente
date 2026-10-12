@@ -27,12 +27,25 @@ def split_frontmatter(text: str) -> tuple[str | None, str]:
     return m.group(1) or "", text[m.end() :]
 
 
+class _Yaml12Loader(yaml.SafeLoader):
+    """YAML 1.2 en booleanos: solo true/false (PyYAML lee ``on``/``yes``/``no`` como booleano)."""
+
+
+_Yaml12Loader.yaml_implicit_resolvers = {
+    ch: [(tag, rx) for tag, rx in resolvers if tag != "tag:yaml.org,2002:bool"]
+    for ch, resolvers in yaml.SafeLoader.yaml_implicit_resolvers.items()
+}
+_Yaml12Loader.add_implicit_resolver(
+    "tag:yaml.org,2002:bool", re.compile(r"^(?:true|True|TRUE|false|False|FALSE)$"), list("tTfF")
+)
+
+
 def parse_frontmatter(text: str) -> dict[str, Any]:
     raw, _ = split_frontmatter(text)
     if raw is None:
         return {}
     try:
-        data = yaml.safe_load(raw)
+        data = yaml.load(raw, Loader=_Yaml12Loader)
     except yaml.YAMLError:
         return {}
     return data if isinstance(data, dict) else {}
