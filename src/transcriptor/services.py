@@ -448,12 +448,20 @@ class AppServices:
         return [s for s in self.sessions() if s.status == "done" and not s.llm_processed]
 
     def process_pending(self, progress: Any = None) -> int:
-        """Agrega resumen y tareas con IA a las clases procesadas en modo local."""
+        """Agrega resumen y tareas con IA a las clases procesadas en modo local.
+
+        Con Claude y varias clases pendientes se usa la Batch API (≈ 50 % más barata): el
+        resultado llega en minutos u horas y se aplica solo (ver ``check_batches``).
+        """
         if not self.ai_available:
             return 0
+        pending = [s for s in self.pending_llm_sessions() if s.id not in self.batched_sessions()]
+        anthropic_provider = self._anthropic()
+        if anthropic_provider is not None and self.cfg.ai.use_batch_for_pending and len(pending) >= 2:
+            return self.submit_pending_batch(anthropic_provider, pending)
         fin = self.finalizer(final_transcriber=_NoTranscriber())
         done = 0
-        for s in self.pending_llm_sessions():
+        for s in pending:
             try:
                 fin.reprocess_with_llm(s, self.course(s.course_id))
                 done += 1
@@ -462,6 +470,86 @@ class AppServices:
             except (LLMError, KeyError):
                 log.exception("No se pudo procesar %s", s.id)
         return done
+
+    # -- procesamiento por lotes (Claude Batch API) ------------------------------------------
+    @property
+    def _batches_file(self) -> Path:
+        return data_dir() / "lotes.json"
+
+    def _load_batches(self) -> list[dict[str, Any]]:
+        import json
+
+        try:
+            return list(json.loads(self._batches_file.read_text(encoding="utf-8")))
+        except (FileNotFoundError, ValueError):
+            return []
+
+    def _save_batches(self, batches: list[dict[str, Any]]) -> None:
+        import json
+
+        from transcriptor.fsutil import atomic_write_text
+
+        atomic_write_text(self._batches_file, json.dumps(batches))
+
+    def batched_sessions(self) -> set[str]:
+        return {sid for b in self._load_batches() for sid in b["sessions"]}
+
+    def _anthropic(self) -> Any:
+        from transcriptor.llm.anthropic_provider import AnthropicProvider
+
+        inner = getattr(self.provider, "inner", None)
+        chain = getattr(inner, "providers", [inner])
+        return next((p for p in chain if isinstance(p, AnthropicProvider) and p.available), None)
+
+    def submit_pending_batch(self, provider: Any, sessions: list[RecordingSession]) -> int:
+        from transcriptor.llm.schemas import LLMClassSummary
+
+        post = PostProcessor(self.provider, self.cfg.ai.extraction_tier)
+        items = []
+        for s in sessions:
+            segments = self.store.load_segments(s.id, "final") or self.store.load_segments(s.id, "live")
+            if segments:
+                items.append((s.id, post.summary_request(segments, s.course_name), LLMClassSummary))
+        if not items:
+            return 0
+        batch_id = provider.submit_batch(items)
+        batches = self._load_batches()
+        batches.append({"id": batch_id, "sessions": [i[0] for i in items],
+                        "created": datetime.now().isoformat()})
+        self._save_batches(batches)
+        self.notices.append(("info", f"{len(items)} clases enviadas a procesar por lotes."))
+        return len(items)
+
+    def check_batches(self) -> int:
+        """Aplica los resultados de lotes terminados. Se llama periódicamente."""
+        from transcriptor.llm.schemas import LLMClassSummary
+
+        batches = self._load_batches()
+        provider = self._anthropic()
+        if not batches or provider is None:
+            return 0
+        applied = 0
+        remaining = []
+        for batch in batches:
+            try:
+                if provider.batch_status(batch["id"]) != "ended":
+                    remaining.append(batch)
+                    continue
+                results = provider.batch_results(batch["id"], LLMClassSummary)
+            except Exception:
+                log.warning("No se pudo consultar el lote %s", batch["id"])
+                remaining.append(batch)
+                continue
+            fin = self.finalizer(final_transcriber=_NoTranscriber())
+            for sid, (result, resp) in results.items():
+                session = self.store.get(sid)
+                if session is None or result is None or resp is None:
+                    continue
+                self.ledger.record(resp)
+                fin.apply_llm_result(session, self.course(session.course_id), result, resp.usage.total)
+                applied += 1
+        self._save_batches(remaining)
+        return applied
 
     def recover_interrupted(self) -> list[str]:
         """Sesiones que quedaron abiertas por un cierre inesperado: se cierran con su audio."""

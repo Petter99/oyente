@@ -13,12 +13,14 @@ from transcriptor.audio.sources import FileAudioSource
 from transcriptor.audio.vad import EnergyDetector
 from transcriptor.config.store import ConfigStore
 from transcriptor.services import AppServices
+from transcriptor.speakers.embedder import SpectralEmbedder
 
 
 @pytest.fixture
 def services(tmp_path: Path, vault: Path) -> AppServices:
     svc = AppServices(ConfigStore(tmp_path / "config.yaml"))
     svc.cfg.general.vault_path = str(vault)
+    svc._speaker_embedder = SpectralEmbedder()  # sin descargar modelos en las pruebas rápidas
     svc.add_course("Cálculo II", "Ing. Pérez", ["LIATE"])
     return svc
 

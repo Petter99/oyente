@@ -91,6 +91,75 @@ class SpectralEmbedder:
         return _normalize(feat.astype(np.float32))
 
 
+def kaldi_fbank(samples: Samples, n_mels: int = 80) -> np.ndarray:
+    """Fbank de 80 bandas compatible con Kaldi/torchaudio (entrada de los modelos WeSpeaker)."""
+    x = samples.astype(np.float64) * 32768.0
+    win, hop, n_fft = 400, 160, 512
+    n = 1 + (x.size - win) // hop
+    if n <= 0:
+        return np.zeros((0, n_mels), dtype=np.float32)
+    idx = np.arange(win)[None, :] + hop * np.arange(n)[:, None]
+    frames = x[idx]
+    frames = frames - frames.mean(axis=1, keepdims=True)
+    frames = np.concatenate([frames[:, :1] * (1 - 0.97), frames[:, 1:] - 0.97 * frames[:, :-1]], axis=1)
+    window = (0.5 - 0.5 * np.cos(2 * np.pi * np.arange(win) / (win - 1))) ** 0.85
+    spec = np.abs(np.fft.rfft(frames * window, n_fft)) ** 2
+    spec = spec[:, : n_fft // 2]
+    mel = _kaldi_mel_banks(n_mels, n_fft, SAMPLE_RATE)
+    feats = np.log(np.maximum(spec @ mel.T, np.finfo(np.float32).eps))
+    return (feats - feats.mean(axis=0, keepdims=True)).astype(np.float32)
+
+
+@cache
+def _kaldi_mel_banks(n_mels: int, n_fft: int, rate: int, low: float = 20.0) -> np.ndarray:
+    def mel(f: np.ndarray | float) -> np.ndarray:
+        return 1127.0 * np.log(1.0 + np.asarray(f) / 700.0)
+
+    high = rate / 2
+    n_bins = n_fft // 2
+    fft_mel = mel(np.arange(n_bins) * rate / n_fft)
+    lo, hi = mel(low), mel(high)
+    delta = (hi - lo) / (n_mels + 1)
+    banks = np.zeros((n_mels, n_bins))
+    for m in range(n_mels):
+        left, center, right = lo + m * delta, lo + (m + 1) * delta, lo + (m + 2) * delta
+        up = (fft_mel - left) / (center - left)
+        down = (right - fft_mel) / (right - center)
+        banks[m] = np.maximum(0.0, np.minimum(up, down))
+    return banks
+
+
+class WespeakerEmbedder:
+    """ResNet34 de WeSpeaker (VoxCeleb, CC-BY-4.0) en ONNX: preciso y sin PyTorch."""
+
+    name = "wespeaker"
+    min_seconds = 0.8
+    # Medido con voces distintas: misma voz ≥ 0,78; voces distintas ≤ 0,45 (scripts/calibrate_speakers.py).
+    default_threshold = 0.55
+    REPO = "Wespeaker/wespeaker-voxceleb-resnet34-LM"
+    FILE = "voxceleb_resnet34_LM.onnx"
+
+    def __init__(self, model_path: str | None = None) -> None:
+        import onnxruntime as ort
+
+        if model_path is None:
+            from huggingface_hub import hf_hub_download
+
+            model_path = hf_hub_download(self.REPO, self.FILE, cache_dir=str(models_dir() / "voz"))
+        opts = ort.SessionOptions()
+        opts.intra_op_num_threads = 2
+        self._session = ort.InferenceSession(model_path, opts, providers=["CPUExecutionProvider"])
+
+    def embed(self, samples: Samples) -> Embedding | None:
+        if samples.size < self.min_seconds * SAMPLE_RATE:
+            return None
+        feats = kaldi_fbank(samples)
+        if feats.shape[0] < 50:
+            return None
+        out = self._session.run(None, {"feats": feats[None, :, :]})[0][0]
+        return _normalize(out.astype(np.float32))
+
+
 class EcapaEmbedder:
     name = "ecapa"
     min_seconds = 0.8
@@ -116,11 +185,13 @@ class EcapaEmbedder:
 
 
 def default_embedder() -> SpeakerEmbedder:
-    try:
-        return EcapaEmbedder()
-    except Exception:
-        log.info("ECAPA no disponible; se usa el extractor espectral local")
-        return SpectralEmbedder()
+    """WeSpeaker (ONNX) → ECAPA (si está instalado PyTorch) → extractor espectral local."""
+    for factory in (WespeakerEmbedder, EcapaEmbedder):
+        try:
+            return factory()
+        except Exception as exc:
+            log.info("Extractor de voz %s no disponible: %s", factory.__name__, exc)
+    return SpectralEmbedder()
 
 
 def cosine(a: np.ndarray, b: np.ndarray) -> float:

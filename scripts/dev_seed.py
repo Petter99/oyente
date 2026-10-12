@@ -22,6 +22,7 @@ from transcriptor.audio.sources import FileAudioSource  # noqa: E402
 from transcriptor.audio.vad import EnergyDetector  # noqa: E402
 from transcriptor.llm.composite import BudgetedProvider  # noqa: E402
 from transcriptor.services import AppServices  # noqa: E402
+from transcriptor.speakers.embedder import SpectralEmbedder  # noqa: E402
 
 
 def main() -> None:
@@ -29,6 +30,7 @@ def main() -> None:
         raise SystemExit("Define TRANSCRIPTOR_HOME para no tocar tus datos reales.")
     home = Path(os.environ["TRANSCRIPTOR_HOME"])
     svc = AppServices()
+    svc._speaker_embedder = SpectralEmbedder()
     svc.cfg.general.vault_path = str(home / "Bóveda")
     Path(svc.cfg.general.vault_path).mkdir(parents=True, exist_ok=True)
     svc.cfg.ui.onboarding_done = True

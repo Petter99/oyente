@@ -36,3 +36,6 @@ uso_tokens.json
 Thumbs.db
 .idea/
 .vscode/
+
+# Credenciales OAuth de Google (se agregan solo al compilar)
+src/transcriptor/google_client.json

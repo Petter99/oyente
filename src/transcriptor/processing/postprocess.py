@@ -99,6 +99,15 @@ class PostProcessor:
         self.tokens_used += resp.usage.total
         return result
 
+    def summary_request(self, segments: list[Segment], course: str) -> LLMRequest:
+        """Petición de una clase completa (también se usa para el procesamiento por lotes)."""
+        return LLMRequest(
+            system=SUMMARY_SYSTEM,
+            messages=[LLMMessage("user", f"Curso: {course}\nTranscripción:\n{compact_transcript(segments)}")],
+            max_tokens=3000,
+            tier=self.tier,
+        )
+
     def summarize(
         self,
         segments: list[Segment],

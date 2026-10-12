@@ -1,0 +1,38 @@
+# Pruebas automáticas. Repositorio privado: los minutos son limitados y los de Windows y macOS
+# cuentan más, así que en cada PR solo se usa Windows (la plataforma de los usuarios).
+# macOS se prueba en el Mac de desarrollo (uv run pytest) y aquí solo al etiquetar versiones.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: Dependencias
+        run: uv sync --frozen
+      - name: Lint
+        run: uv run ruff check src tests scripts
+      - name: Tipos
+        run: uv run mypy
+      - name: Pruebas (rápidas, sin red ni hardware)
+        run: uv run pytest -q --cov=transcriptor --cov-report=term
+      - name: Licencias (lista para vender)
+        run: uv run python scripts/check_licenses.py
+      - name: Secretos
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

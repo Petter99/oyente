@@ -29,10 +29,10 @@ from transcriptor.config.models import AppConfig, Course
 from transcriptor.events import EventBus
 from transcriptor.links.builder import LinkBuilder
 from transcriptor.links.vault import sync_vault
-from transcriptor.llm.schemas import ChunkInsights
+from transcriptor.llm.schemas import ChunkInsights, LLMClassSummary
 from transcriptor.notes.markdown import replace_block
 from transcriptor.notes.writer import NoteWriter, VaultLayout, transcript_markdown
-from transcriptor.processing.postprocess import PostProcessor
+from transcriptor.processing.postprocess import PostProcessor, from_llm
 from transcriptor.search.index import SearchIndex
 from transcriptor.session.models import ClassSummary, RecordingSession, TaskItem
 from transcriptor.session.store import SessionStore
@@ -300,6 +300,21 @@ class Finalizer:
         session.llm_processed = True
         session.llm_tokens += self.d.postprocessor.tokens_used
         self._cross_check(summary.tasks, course.name)
+        self.write_note(session, segments)
+        self.d.store.save(session)
+        self.d.bus.emit("session_updated", session_id=session.id)
+        return session
+
+    def apply_llm_result(self, session: RecordingSession, course: Course, result: LLMClassSummary,
+                         tokens: int = 0) -> RecordingSession:
+        """Aplica un resumen obtenido aparte (p. ej. del procesamiento por lotes)."""
+        segments = self.d.store.load_segments(session.id, "final") or self.d.store.load_segments(
+            session.id, "live"
+        )
+        session.summary = from_llm(result, session.day)
+        session.llm_processed = True
+        session.llm_tokens += tokens
+        self._cross_check(session.summary.tasks, course.name)
         self.write_note(session, segments)
         self.d.store.save(session)
         self.d.bus.emit("session_updated", session_id=session.id)

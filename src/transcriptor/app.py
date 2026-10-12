@@ -180,6 +180,7 @@ def build(svc: object, port: int, control_token: str) -> None:
                         )
                         svc.notices.append(("clase", up.course.id))
                 svc.sync_google_tasks()
+                svc.check_batches()
             except Exception:
                 log.debug("Error revisando el horario", exc_info=True)
             time.sleep(60)

@@ -14,9 +14,11 @@ from transcriptor.asr.fake import FakeTranscriber
 from transcriptor.audio.sources import FileAudioSource
 from transcriptor.audio.vad import EnergyDetector
 from transcriptor.services import AppServices
+from transcriptor.speakers.embedder import SpectralEmbedder
 
 home = Path(os.environ["TRANSCRIPTOR_HOME"])
 svc = AppServices()
+svc._speaker_embedder = SpectralEmbedder()
 svc.cfg.general.vault_path = str(home / "Bóveda")
 Path(svc.cfg.general.vault_path).mkdir(parents=True, exist_ok=True)
 if os.environ.get("UI_TEST_ONBOARDED", "1") == "1":

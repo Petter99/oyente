@@ -1,0 +1,16 @@
+title = "gitleaks del proyecto"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Valores de prueba falsos y la clave PÚBLICA de la extensión (no es secreta)."
+paths = ['''browser-extension/manifest\.template\.json''', '''^dist/''', '''^build/''', '''^\.venv/''']
+regexes = [
+  '''sk-ant-api03-(SECRETO|NOFILTRAR)[0-9]+''',
+  '''AIza(SyA1234567890|ClaveAnterior)[A-Za-z0-9]*''',
+  '''ya29\.(a0AfH6SMBxyz|abc)''',
+  '''1//refresh''',
+  '''hf_ABCDEFGHIJKLMNOPQRSTUV''',
+  '''valor-muy-secreto-42''',
+]

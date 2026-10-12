@@ -1,0 +1,129 @@
+# Avisos de licencias de terceros
+
+Este programa incluye los siguientes componentes de código abierto. Los modelos de voz y texto se descargan aparte con sus propias licencias (Whisper: MIT; Silero VAD: MIT; ECAPA de SpeechBrain: Apache-2.0; BGE-M3: MIT).
+
+- **aiofiles** 25.1.0 — Apache Software License — https://github.com/Tinche/aiofiles
+- **aiohappyeyeballs** 2.7.1 — Python Software Foundation License — https://github.com/aio-libs/aiohappyeyeballs
+- **aiohttp** 3.14.5 — Apache-2.0 AND MIT — https://github.com/aio-libs/aiohttp
+- **aiosignal** 1.4.0 — Apache Software License — https://github.com/aio-libs/aiosignal
+- **annotated-doc** 0.0.5 — MIT — https://github.com/fastapi/annotated-doc
+- **annotated-types** 0.8.0 — MIT — https://github.com/annotated-types/annotated-types
+- **anthropic** 1.13.0 — MIT License — https://github.com/anthropics/anthropic-sdk-python
+- **anyio** 4.15.1 — MIT — https://anyio.readthedocs.io/en/stable/versionhistory.html
+- **ast_serialize** 0.13.0 — MIT — https://github.com/mypyc/ast_serialize
+- **attrs** 26.1.0 — MIT — https://www.attrs.org/en/stable/changelog.html
+- **av** 19.0.1 — BSD-3-Clause — https://pyav.basswood.io
+- **bidict** 0.24.1 — MPL-2.0 — https://github.com/jab/bidict
+- **bottle** 0.13.4 — MIT License — http://bottlepy.org/
+- **certifi** 2026.7.22 — Mozilla Public License 2.0 (MPL 2.0) — https://github.com/certifi/python-certifi
+- **cffi** 2.1.1 — MIT-0 — https://cffi.readthedocs.io/en/latest/whatsnew.html
+- **charset-normalizer** 3.5.2 — MIT — https://github.com/jawah/charset_normalizer/blob/master/CHANGELOG.md
+- **click** 8.5.0 — BSD-3-Clause — https://github.com/pallets/click/
+- **cryptography** 50.0.2 — Apache-2.0 OR BSD-3-Clause — https://github.com/pyca/cryptography
+- **ctranslate2** 4.8.2 — MIT — https://opennmt.net
+- **distro** 1.9.0 — Apache Software License — https://github.com/python-distro/distro
+- **docstring_parser** 0.18.0 — MIT License — https://github.com/rr-/docstring_parser
+- **docutils** 0.23 — BSD License; GNU General Public License (GPL); Public Domain — https://docutils.sourceforge.io
+- **fastapi** 0.143.0 — MIT — https://github.com/fastapi/fastapi
+- **faster-whisper** 1.2.1 — MIT License — https://github.com/SYSTRAN/faster-whisper
+- **filelock** 4.1.1 — MIT — https://github.com/tox-dev/py-filelock
+- **flatbuffers** 25.12.19 — Apache Software License — https://google.github.io/flatbuffers/
+- **frozenlist** 1.8.0 — Apache-2.0 — https://github.com/aio-libs/frozenlist
+- **fsspec** 2026.9.0 — BSD-3-Clause — https://github.com/fsspec/filesystem_spec
+- **google-api-core** 2.42.0 — Apache Software License — https://github.com/googleapis/google-cloud-python/tree/main/packages/google-api-core
+- **google-api-python-client** 2.201.0 — Apache Software License — https://github.com/googleapis/google-api-python-client/
+- **google-auth** 2.61.0 — Apache Software License — https://github.com/googleapis/google-cloud-python/tree/main/packages/google-auth
+- **google-auth-httplib2** 0.4.4 — Apache Software License — https://github.com/googleapis/google-cloud-python/tree/main/packages/google-auth-httplib2
+- **google-auth-oauthlib** 1.5.0 — Apache Software License — https://github.com/googleapis/google-cloud-python/tree/main/packages/google-auth-oauthlib
+- **google-genai** 2.29.0 — Apache-2.0 — https://github.com/googleapis/python-genai
+- **googleapis-common-protos** 1.75.5 — Apache-2.0 — https://github.com/googleapis/google-cloud-python/tree/main/packages/googleapis-common-protos
+- **h11** 0.16.0 — MIT License — https://github.com/python-hyper/h11
+- **hf-xet** 1.7.0 — Apache-2.0 — https://github.com/huggingface/xet-core
+- **httpcore** 1.0.9 — BSD-3-Clause — https://www.encode.io/httpcore/
+- **httpcore2** 2.13.1 — BSD-3-Clause — https://github.com/pydantic/httpx2
+- **httplib2** 0.32.0 — MIT License — https://github.com/httplib2/httplib2
+- **httptools** 0.9.0 — MIT — https://github.com/MagicStack/httptools
+- **httpx** 0.28.1 — BSD License — https://github.com/encode/httpx
+- **httpx2** 2.13.1 — BSD-3-Clause — https://github.com/pydantic/httpx2
+- **huggingface_hub** 1.33.0 — Apache Software License — https://github.com/huggingface/huggingface_hub
+- **icalendar** 7.3.0 — BSD-2-Clause — https://icalendar.readthedocs.io/en/stable/
+- **idna** 3.20 — BSD-3-Clause — https://github.com/kjd/idna
+- **ifaddr** 0.2.0 — MIT License — https://github.com/pydron/ifaddr
+- **itsdangerous** 2.2.0 — BSD License — https://github.com/pallets/itsdangerous/
+- **jaraco.classes** 3.4.0 — MIT License — https://github.com/jaraco/jaraco.classes
+- **jaraco.context** 6.1.2 — MIT — https://github.com/jaraco/jaraco.context
+- **jaraco.functools** 4.6.0 — MIT — https://github.com/jaraco/jaraco.functools
+- **Jinja2** 3.1.6 — BSD License — https://github.com/pallets/jinja/
+- **jiter** 0.17.0 — MIT — https://github.com/pydantic/jiter/
+- **keyring** 25.7.0 — MIT — https://github.com/jaraco/keyring
+- **markdown2** 2.5.5 — MIT — https://github.com/trentm/python-markdown2
+- **MarkupSafe** 3.0.4 — BSD-3-Clause — https://github.com/pallets/markupsafe/
+- **more-itertools** 11.1.0 — MIT — https://github.com/more-itertools/more-itertools
+- **multidict** 7.1.0 — Apache-2.0 — https://github.com/aio-libs/multidict
+- **nicegui** 3.18.0 — MIT — https://nicegui.io
+- **numpy** 2.5.4 — BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0 — https://numpy.org
+- **oauthlib** 4.0.0 — BSD-3-Clause — https://github.com/oauthlib/oauthlib
+- **onnxruntime** 1.31.0 — MIT License — https://onnxruntime.ai
+- **opentelemetry-api** 1.45.1 — Apache-2.0 — https://github.com/open-telemetry/opentelemetry-python/tree/main/opentelemetry-api
+- **orjson** 3.13.0 — MPL-2.0 AND (Apache-2.0 OR MIT) — https://github.com/ijl/orjson
+- **packaging** 26.3 — Apache-2.0 OR BSD-2-Clause — https://github.com/pypa/packaging
+- **pillow** 12.3.0 — MIT-CMU — https://python-pillow.github.io
+- **platformdirs** 4.13.0 — MIT — https://github.com/tox-dev/platformdirs
+- **propcache** 0.5.4 — Apache-2.0 — https://github.com/aio-libs/propcache
+- **proto-plus** 1.29.0 — Apache Software License — https://github.com/googleapis/google-cloud-python/tree/main/packages/proto-plus
+- **protobuf** 7.36.2 — 3-Clause BSD License — https://developers.google.com/protocol-buffers/
+- **proxy_tools** 0.1.0 — MIT License — http://github.com/jtushman/proxy_tools
+- **psutil** 7.2.2 — BSD-3-Clause — https://github.com/giampaolo/psutil
+- **pyasn1** 0.6.4 — BSD-2-Clause — https://github.com/pyasn1/pyasn1
+- **pyasn1_modules** 0.4.2 — BSD License — https://github.com/pyasn1/pyasn1-modules
+- **pycparser** 3.11 — BSD-3-Clause — https://github.com/eliben/pycparser
+- **pydantic** 2.14.1 — MIT — https://github.com/pydantic/pydantic
+- **pydantic_core** 2.50.1 — MIT — https://github.com/pydantic
+- **Pygments** 2.21.0 — BSD-2-Clause — https://pygments.org
+- **pyobjc-core** 12.2.2 — MIT — https://github.com/ronaldoussoren/pyobjc
+- **pyobjc-framework-AVFoundation** 12.2.2 — MIT — https://github.com/ronaldoussoren/pyobjc
+- **pyobjc-framework-Cocoa** 12.2.2 — MIT — https://github.com/ronaldoussoren/pyobjc
+- **pyobjc-framework-CoreAudio** 12.2.2 — MIT — https://github.com/ronaldoussoren/pyobjc
+- **pyobjc-framework-CoreMedia** 12.2.2 — MIT — https://github.com/ronaldoussoren/pyobjc
+- **pyobjc-framework-libdispatch** 12.2.2 — MIT — https://github.com/ronaldoussoren/pyobjc
+- **pyobjc-framework-Quartz** 12.2.2 — MIT — https://github.com/ronaldoussoren/pyobjc
+- **pyobjc-framework-ScreenCaptureKit** 12.2.2 — MIT — https://github.com/ronaldoussoren/pyobjc
+- **pyobjc-framework-Security** 12.2.2 — MIT — https://github.com/ronaldoussoren/pyobjc
+- **pyobjc-framework-UniformTypeIdentifiers** 12.2.2 — MIT — https://github.com/ronaldoussoren/pyobjc
+- **pyobjc-framework-WebKit** 12.2.2 — MIT — https://github.com/ronaldoussoren/pyobjc
+- **pyparsing** 3.3.3 — MIT — https://github.com/pyparsing/pyparsing/
+- **pystray** 0.19.5 — GNU Lesser General Public License v3 (LGPLv3) — https://github.com/moses-palmer/pystray
+- **python-dateutil** 2.9.0.post0 — Apache Software License; BSD License — https://github.com/dateutil/dateutil
+- **python-dotenv** 1.2.4 — BSD-3-Clause — https://github.com/theskumar/python-dotenv
+- **python-engineio** 4.14.0 — MIT — https://code.miguelgrinberg.com/miguelgrinberg/python-engineio
+- **python-multipart** 0.0.32 — Apache-2.0 — https://github.com/Kludex/python-multipart
+- **python-socketio** 5.17.0 — MIT — https://code.miguelgrinberg.com/miguelgrinberg/python-socketio
+- **pywebview** 6.2.1 — BSD License — https://pywebview.flowrl.com/
+- **PyYAML** 6.0.3 — MIT License — https://pyyaml.org/
+- **RapidFuzz** 3.14.6 — MIT — https://github.com/rapidfuzz/RapidFuzz
+- **requests** 2.34.2 — Apache Software License — https://github.com/psf/requests
+- **requests-oauthlib** 2.0.0 — BSD License — https://github.com/requests/requests-oauthlib
+- **simple-websocket** 1.1.0 — MIT License — https://github.com/miguelgrinberg/simple-websocket
+- **six** 1.17.0 — MIT License — https://github.com/benjaminp/six
+- **sniffio** 1.3.1 — Apache Software License; MIT License — https://github.com/python-trio/sniffio
+- **sounddevice** 0.5.6 — MIT — https://github.com/spatialaudio/python-sounddevice/
+- **soundfile** 0.14.0 — BSD License — https://github.com/bastibe/python-soundfile
+- **starlette** 1.7.0 — BSD-3-Clause — https://github.com/Kludex/starlette
+- **tenacity** 9.1.4 — Apache Software License — https://github.com/jd/tenacity
+- **tinycss2** 1.5.1 — BSD License — https://www.courtbouillon.org/tinycss2
+- **tokenizers** 0.23.3 — Apache Software License — https://github.com/huggingface/tokenizers
+- **tqdm** 4.70.1 — MPL-2.0 AND MIT — https://tqdm.github.io
+- **truststore** 0.10.4 — MIT — https://github.com/sethmlarson/truststore
+- **typing-inspection** 0.4.4 — MIT — https://github.com/pydantic/typing-inspection
+- **typing_extensions** 4.16.0 — PSF-2.0 — https://github.com/python/typing_extensions
+- **tzdata** 2026.5 — Apache-2.0 — https://github.com/python/tzdata
+- **uritemplate** 4.2.0 — BSD 3-Clause OR Apache-2.0 — https://uritemplate.readthedocs.org
+- **urllib3** 2.8.0 — MIT — https://github.com/urllib3/urllib3/blob/main/CHANGES.rst
+- **uvicorn** 0.54.0 — BSD-3-Clause — https://uvicorn.dev/
+- **uvloop** 0.23.0 — Apache Software License; MIT License
+- **watchdog** 6.0.0 — Apache Software License — https://github.com/gorakhargosh/watchdog
+- **watchfiles** 1.3.0 — MIT License — https://github.com/samuelcolvin/watchfiles
+- **webencodings** 0.6.1 — BSD License — https://github.com/CourtBouillon/webencodings
+- **websockets** 16.1.1 — BSD-3-Clause — https://github.com/python-websockets/websockets
+- **wsproto** 1.3.2 — MIT — https://github.com/python-hyper/wsproto/
+- **yarl** 1.25.1 — Apache-2.0 — https://github.com/aio-libs/yarl
