@@ -2,6 +2,7 @@
 
 ## Sin publicar
 - Asistente: el paso 6 (Obsidian) ya no muestra «Omitir», que llevaba a una página en blanco; «Terminar» funciona sin carpetas excluidas y aunque falle el análisis de la bóveda.
+- Windows: el modelo de voz no terminaba de descargarse en el ejecutable sin consola (la barra de progreso de la descarga fallaba al no haber `stderr`).
 
 ## 0.1.0 — 2026-10-12
 Primera versión completa (alfa interna).
