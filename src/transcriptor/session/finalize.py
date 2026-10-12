@@ -89,7 +89,7 @@ class Finalizer:
             glossary=tuple(course.glossary),
         )
 
-        self._step(session, "Pasada final de transcripción")
+        self._step(session, "Pasada final de transcripción (la primera vez descarga el modelo)")
         segments = self.final_pass(session, audio_files, opts, live_segments)
 
         self._step(session, "Identificando al profesor")

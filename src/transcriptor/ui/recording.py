@@ -342,7 +342,8 @@ def recording_page(svc: AppServices) -> None:
         if not await confirm:
             return
         sid = await run.io_bound(svc.stop_recording)
-        ui.navigate.to(f"/clase/{sid}")
+        if sid is not None:  # None: otra llamada ya la está deteniendo
+            ui.navigate.to(f"/clase/{sid}")
 
     def change_source(kind: str) -> None:
         try:

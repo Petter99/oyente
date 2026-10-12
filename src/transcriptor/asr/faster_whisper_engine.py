@@ -38,6 +38,12 @@ class FasterWhisperTranscriber:
         self._model: Any = None
         self._lock = threading.Lock()
 
+    def ensure_downloaded(self) -> None:
+        """Descarga el modelo si falta (sin cargarlo en memoria)."""
+        from faster_whisper.utils import download_model
+
+        download_model(self.model_name, cache_dir=str(models_dir() / "whisper"))
+
     def _load(self) -> Any:
         if self._model is None:
             from faster_whisper import WhisperModel

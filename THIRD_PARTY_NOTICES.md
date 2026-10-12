@@ -19,6 +19,9 @@ Este programa incluye los siguientes componentes de código abierto. Los modelos
 - **cffi** 2.1.1 — MIT-0 — https://cffi.readthedocs.io/en/latest/whatsnew.html
 - **charset-normalizer** 3.5.2 — MIT — https://github.com/jawah/charset_normalizer/blob/master/CHANGELOG.md
 - **click** 8.5.0 — BSD-3-Clause — https://github.com/pallets/click/
+- **clr_loader** 0.3.1 — MIT — https://pythonnet.github.io/clr-loader/
+- **colorama** 0.4.6 — BSD License — https://github.com/tartley/colorama
+- **comtypes** 1.4.17 — MIT — https://github.com/enthought/comtypes
 - **cryptography** 50.0.2 — Apache-2.0 OR BSD-3-Clause — https://github.com/pyca/cryptography
 - **ctranslate2** 4.8.2 — MIT — https://opennmt.net
 - **distro** 1.9.0 — Apache Software License — https://github.com/python-distro/distro
@@ -76,6 +79,7 @@ Este programa incluye los siguientes componentes de código abierto. Los modelos
 - **psutil** 7.2.2 — BSD-3-Clause — https://github.com/giampaolo/psutil
 - **pyasn1** 0.6.4 — BSD-2-Clause — https://github.com/pyasn1/pyasn1
 - **pyasn1_modules** 0.4.2 — BSD License — https://github.com/pyasn1/pyasn1-modules
+- **pycaw** 20260927 — MIT — https://github.com/AndreMiras/pycaw
 - **pycparser** 3.11 — BSD-3-Clause — https://github.com/eliben/pycparser
 - **pydantic** 2.14.1 — MIT — https://github.com/pydantic/pydantic
 - **pydantic_core** 2.50.1 — MIT — https://github.com/pydantic
@@ -98,7 +102,9 @@ Este programa incluye los siguientes componentes de código abierto. Los modelos
 - **python-engineio** 4.14.0 — MIT — https://code.miguelgrinberg.com/miguelgrinberg/python-engineio
 - **python-multipart** 0.0.32 — Apache-2.0 — https://github.com/Kludex/python-multipart
 - **python-socketio** 5.17.0 — MIT — https://code.miguelgrinberg.com/miguelgrinberg/python-socketio
+- **pythonnet** 3.2.1 — MIT — https://pythonnet.github.io/
 - **pywebview** 6.2.1 — BSD License — https://pywebview.flowrl.com/
+- **pywin32-ctypes** 0.2.3 — BSD-3-Clause — https://github.com/enthought/pywin32-ctypes
 - **PyYAML** 6.0.3 — MIT License — https://pyyaml.org/
 - **RapidFuzz** 3.14.6 — MIT — https://github.com/rapidfuzz/RapidFuzz
 - **requests** 2.34.2 — Apache Software License — https://github.com/psf/requests
@@ -106,6 +112,7 @@ Este programa incluye los siguientes componentes de código abierto. Los modelos
 - **simple-websocket** 1.1.0 — MIT License — https://github.com/miguelgrinberg/simple-websocket
 - **six** 1.17.0 — MIT License — https://github.com/benjaminp/six
 - **sniffio** 1.3.1 — Apache Software License; MIT License — https://github.com/python-trio/sniffio
+- **SoundCard** 0.4.6 — BSD License — https://github.com/bastibe/SoundCard
 - **sounddevice** 0.5.6 — MIT — https://github.com/spatialaudio/python-sounddevice/
 - **soundfile** 0.14.0 — BSD License — https://github.com/bastibe/python-soundfile
 - **starlette** 1.7.0 — BSD-3-Clause — https://github.com/Kludex/starlette
