@@ -45,6 +45,9 @@ class FileAudioSource(AudioSource):
 
     def _run(self) -> None:
         pos = 0
+        started = time.monotonic()
+        block_s = self.chunk / SAMPLE_RATE / self.speed
+        sent = 0
         while self.running and pos < self._data.size:
             if self.lose_after_s is not None and pos >= self.lose_after_s * SAMPLE_RATE:
                 self._mark_lost("simulado")
@@ -53,7 +56,10 @@ class FileAudioSource(AudioSource):
             self._emit(block, SAMPLE_RATE)
             pos += self.chunk
             if self.realtime:
-                time.sleep(self.chunk / SAMPLE_RATE / self.speed)
+                # Calendario absoluto: si una pausa se pasa, la siguiente se acorta. Con
+                # sleep fijo el exceso se acumulaba (hasta +45 % en un runner de macOS).
+                sent += 1
+                time.sleep(max(0.0, started + sent * block_s - time.monotonic()))
         self.finished.set()
 
     def _close(self) -> None:

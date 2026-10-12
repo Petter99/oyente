@@ -3,6 +3,7 @@
 Hilos:
 - uno por fuente: lee audio → FLAC por canal + segmentador (VAD) → cola de frases;
 - un trabajador de transcripción: frase → hablante → Whisper → .txt en vivo + eventos;
+- un hilo de texto provisional: re-transcribe la frase en curso cada ~0.5 s (evento «partial»);
 - un reloj: rellena con silencio los canales pausados o perdidos para mantener la alineación.
 
 El .txt en vivo se escribe con flush en cada frase: si la app se cierra, no se pierde lo dicho.
@@ -15,6 +16,7 @@ import queue
 import threading
 import time
 from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TextIO
@@ -24,7 +26,7 @@ import numpy as np
 from transcriptor.asr.base import Segment, TranscribeOptions, Transcriber, format_ts
 from transcriptor.audio.recorder import ChannelRecorder
 from transcriptor.audio.sources.base import AudioSource
-from transcriptor.audio.types import Channel, Utterance
+from transcriptor.audio.types import SAMPLE_RATE, Channel, Utterance
 from transcriptor.audio.vad import SpeechDetector, StreamingSegmenter
 from transcriptor.events import EventBus
 from transcriptor.session.models import Marker, RecordingSession
@@ -33,6 +35,9 @@ from transcriptor.speakers.identifier import SpeakerIdentifier
 log = logging.getLogger(__name__)
 
 _STOP = object()
+PARTIAL_EVERY_S = 0.5  # cada cuánto se refresca el texto provisional
+MIN_PARTIAL_S = 0.6  # no se transcribe menos audio que esto
+MIN_NEW_AUDIO_S = 0.4  # ni se repite sin audio nuevo
 
 
 @dataclass
@@ -79,7 +84,12 @@ class LiveRecorder:
         self._txt: TextIO | None = None
         self._worker: threading.Thread | None = None
         self._clock: threading.Thread | None = None
+        self._partial: threading.Thread | None = None
+        self._asr_lock = (
+            threading.Lock()
+        )  # un solo Whisper a la vez; el texto final tiene prioridad
         self._lock = threading.Lock()
+        self._speaker_pool = ThreadPoolExecutor(1, thread_name_prefix="hablante")
         for src in sources:
             channel = src.info.channel
             self._channels[channel] = _ChannelState(
@@ -127,6 +137,8 @@ class LiveRecorder:
         self._worker.start()
         self._clock = threading.Thread(target=self._clock_loop, name="clock", daemon=True)
         self._clock.start()
+        self._partial = threading.Thread(target=self._partial_loop, name="parcial", daemon=True)
+        self._partial.start()
         self.bus.emit("recording_started", session_id=self.session.id)
 
     def pause(self) -> None:
@@ -175,12 +187,15 @@ class LiveRecorder:
             self._worker.join()
         if self._clock:
             self._clock.join(timeout=2)
+        if self._partial:
+            self._partial.join(timeout=5)
         end = self.elapsed
         for state in self._channels.values():
             state.recorder.pad_to(end)
             state.recorder.close()
         if self._txt:
             self._txt.close()
+        self._speaker_pool.shutdown(wait=False)
         self.bus.emit("recording_stopped", session_id=self.session.id, duration=end)
         return self.segments
 
@@ -217,6 +232,42 @@ class LiveRecorder:
                     state.recorder.pad_to(now)
             self.bus.emit("tick", t=now, levels=self.levels())
 
+    def _partial_loop(self) -> None:
+        """Texto provisional: lo que va de la frase en curso, antes de que se cierre."""
+        last: dict[Channel, int] = {}  # muestras ya transcritas por canal
+        while not self._stopping.wait(PARTIAL_EVERY_S):
+            if self._paused.is_set() or not self._utts.empty():
+                continue  # el texto definitivo pendiente va primero
+            for channel, state in self._channels.items():
+                try:
+                    start, samples = state.segmenter.peek()
+                    if samples.size < MIN_PARTIAL_S * SAMPLE_RATE:
+                        last.pop(channel, None)
+                        continue
+                    done = last.get(channel, 0)
+                    if samples.size < done:
+                        done = 0  # la frase anterior se cerró: empieza otra
+                    if samples.size - done < MIN_NEW_AUDIO_S * SAMPLE_RATE:
+                        continue
+                    if not self._asr_lock.acquire(blocking=False):
+                        continue  # Whisper ocupado con una frase definitiva
+                    try:
+                        segs = self.transcriber.transcribe(samples, start, self.opts)
+                    finally:
+                        self._asr_lock.release()
+                    last[channel] = samples.size
+                    text = " ".join(s.text for s in segs).strip()
+                    if text and not self._stopping.is_set():
+                        self.bus.emit(
+                            "partial",
+                            channel=channel,
+                            start=start,
+                            end=start + samples.size / SAMPLE_RATE,
+                            text=text,
+                        )
+                except Exception:
+                    log.exception("Error en el texto provisional")
+
     def _asr_loop(self) -> None:
         while True:
             item = self._utts.get()
@@ -231,14 +282,22 @@ class LiveRecorder:
             self.bus.emit("queue", pending=self._utts.qsize())
 
     def _process(self, utt: Utterance) -> None:
-        speaker = ""
-        if self.identifier is not None:
-            speaker, emb = self.identifier.label_live(utt.channel, utt.samples)
-            if emb is not None:
-                self._channels[utt.channel].embeddings.append((utt.start, utt.end, emb))
-        elif utt.channel == "mic":
-            speaker = "Yo"
-        segments = self.transcriber.transcribe(utt.samples, utt.start, self.opts)
+        # El hablante se identifica en paralelo con Whisper: no suma a la latencia del texto.
+        who = (
+            self._speaker_pool.submit(self.identifier.label_live, utt.channel, utt.samples)
+            if self.identifier is not None
+            else None
+        )
+        with self._asr_lock:
+            segments = self.transcriber.transcribe(utt.samples, utt.start, self.opts)
+        speaker = "Yo" if utt.channel == "mic" else ""
+        if who is not None:
+            try:
+                speaker, emb = who.result()
+                if emb is not None:
+                    self._channels[utt.channel].embeddings.append((utt.start, utt.end, emb))
+            except Exception:
+                log.exception("No se pudo identificar al hablante; se muestra el texto igual")
         for seg in segments:
             seg.channel = utt.channel
             seg.speaker = speaker

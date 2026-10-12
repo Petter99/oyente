@@ -289,6 +289,11 @@ def recording_page(svc: AppServices) -> None:
                             waiting = ui.label(
                                 "Escuchando… el texto aparecerá aquí en cuanto alguien hable."
                             ).classes("muted q-pa-md")
+                    tentative = (
+                        ui.label("")
+                        .classes("muted q-px-lg")
+                        .style("font-style:italic;min-height:1.6em")
+                    )
                     status = ui.label("").classes("muted small q-px-lg q-pb-sm")
                 with ui.element("aside").style(
                     "width:320px;border-left:1px solid var(--borde);display:flex;flex-direction:column;"
@@ -388,6 +393,7 @@ def recording_page(svc: AppServices) -> None:
         if len(segments) > seen["count"]:
             seen["count"] = len(segments)
             scroller.scroll_to(percent=1.0)
+        tentative.set_text(" ".join(current.partials.values()))  # texto provisional, en gris
         status.set_text(
             f"{current.queue} frases en cola de transcripción…" if current.queue > 2 else ""
         )
