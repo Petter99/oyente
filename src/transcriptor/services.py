@@ -44,6 +44,7 @@ from transcriptor.session.finalize import FinalizeDeps, Finalizer
 from transcriptor.session.live import LiveRecorder
 from transcriptor.session.models import RecordingSession, TaskItem
 from transcriptor.session.store import SessionStore
+from transcriptor.session.suggest import find_course
 from transcriptor.speakers.embedder import SpeakerEmbedder, SpectralEmbedder
 from transcriptor.speakers.identifier import SpeakerIdentifier
 from transcriptor.speakers.profiles import SpeakerProfileStore
@@ -191,6 +192,45 @@ class AppServices:
         self.cfg.courses.append(course)
         self.save_config()
         return course
+
+    def apply_course_info(
+        self, session_id: str, name: str, teacher: str = ""
+    ) -> tuple[Course, bool]:
+        """Crea el curso (o completa el profesor del existente) y lo refleja en la clase.
+
+        Sirve tanto para aceptar la sugerencia de la IA/Calendar como para que el usuario lo
+        escriba a mano. Devuelve (curso, fue_creado).
+        """
+        name, teacher = name.strip(), teacher.strip()
+        if not name:
+            raise ValueError("Falta el nombre del curso")
+        course = find_course(name, self.cfg.courses)
+        created = course is None
+        if course is None:
+            course = self.add_course(name, teacher)
+        elif teacher and course.teacher != teacher:
+            course.teacher = teacher
+            self.save_config()
+        session = self.store.get(session_id)
+        if session is not None:
+            if session.suggestion is not None:
+                session.suggestion.status = "accepted"
+            if session.course_id == course.id and teacher and session.teacher != teacher:
+                session.teacher = teacher
+                if session.note_path:  # actualiza la nota y la nota del profesor
+                    segments = self.store.load_segments(session.id, "final")
+                    self.finalizer(final_transcriber=_NoTranscriber()).write_note(session, segments)
+            self.store.save(session)
+        return course, created
+
+    def dismiss_suggestion(self, session_id: str) -> None:
+        session = self.store.get(session_id)
+        if session is not None and session.suggestion is not None:
+            session.suggestion.status = "dismissed"
+            self.store.save(session)
+
+    def _reads_schedule(self, calendar: CalendarService) -> bool:
+        return self.cfg.google.connected and self.cfg.google.read_schedule and calendar.connected
 
     def course(self, course_id: str) -> Course:
         found = self.cfg.course(course_id)
@@ -385,6 +425,7 @@ class AppServices:
             speaker_embedder=self.speaker_embedder(),
             profiles=self.profiles,
             task_checker=calendar if (calendar.connected or calendar.ics is not None) else None,
+            schedule=calendar if self._reads_schedule(calendar) else None,
         )
         return Finalizer(deps)
 

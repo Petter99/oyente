@@ -223,6 +223,20 @@ class CalendarService:
                 out.append(UpcomingClass(course, e.title, e.start, e.end))
         return sorted(out, key=lambda u: u.start)
 
+    def event_during(self, start: datetime, end: datetime | None) -> CalendarEntry | None:
+        """Evento de Google Calendar con horario que más se solapa con la clase grabada."""
+        end = end or start
+        start, end = start.astimezone(), end.astimezone()
+        best: tuple[float, CalendarEntry | None] = (0.0, None)
+        for e in self.calendar_entries(start.date(), start.date() + timedelta(days=1)):
+            if e.start is None or e.source == "universidad":
+                continue  # solo eventos con hora; lo de Canvas son tareas, no clases
+            e_end = e.end or e.start + timedelta(hours=1)
+            overlap = (min(end, e_end) - max(start, e.start)).total_seconds()
+            if overlap > best[0]:
+                best = (overlap, e)
+        return best[1]
+
     # ------------------------------------------------------------------ calendario propio
     def ensure_app_calendar(self) -> str | None:
         api = self.calendar_api(SCOPE_APP_CALENDAR)

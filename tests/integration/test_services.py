@@ -121,3 +121,30 @@ def test_recover_interrupted_session(services: AppServices, vault: Path, tmp_pat
     recovered = services.store.get(s.id)
     assert recovered and recovered.status == "done" and (vault / recovered.note_path).exists()
     assert np.any(clase)
+
+
+def test_apply_course_info_creates_course_and_sets_teacher(
+    services: AppServices, vault: Path
+) -> None:
+    from transcriptor.session.models import CourseSuggestion
+
+    sid = _record(services)
+    session = services.store.get(sid)
+    assert session
+    session.suggestion = CourseSuggestion(course_name="Física I", teacher="Ing. Ruiz")
+    services.store.save(session)
+
+    course, created = services.apply_course_info(sid, "Física I", "Ing. Ruiz")
+    assert created and course.teacher == "Ing. Ruiz"
+    assert any(c.name == "Física I" for c in services.cfg.courses)
+    assert services.store.get(sid).suggestion.status == "accepted"  # type: ignore[union-attr]
+
+    # Mismo curso de la clase, otro profesor: se actualiza el curso, la sesión y la nota.
+    first = services.cfg.courses[0]
+    _, created = services.apply_course_info(sid, first.name, "Dra. Gómez")
+    assert not created and first.teacher == "Dra. Gómez"
+    updated = services.store.get(sid)
+    assert updated and updated.teacher == "Dra. Gómez"
+    assert "Dra. Gómez" in (vault / updated.note_path).read_text(encoding="utf-8")
+
+    services.dismiss_suggestion(sid)  # no falla aunque ya esté aceptada

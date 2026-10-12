@@ -74,6 +74,8 @@ def default_for(schema: type) -> BaseModel:
                     minuto="00:00:01",
                 )
             ],
+            curso_sugerido="",
+            profesor_sugerido="",
         )
     if schema is ChunkInsights:
         return ChunkInsights(

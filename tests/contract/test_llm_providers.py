@@ -34,6 +34,8 @@ from transcriptor.llm.schemas import LLMClassSummary
 MODELS = AIConfig().models
 SUMMARY = {
     "titulo": "Integrales",
+    "curso_sugerido": "",
+    "profesor_sugerido": "",
     "resumen": "Se vio integración.",
     "puntos_clave": [],
     "temas": ["Integración por partes"],

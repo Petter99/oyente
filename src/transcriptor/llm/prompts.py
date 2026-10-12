@@ -13,13 +13,16 @@ Reglas:
 - "fecha_texto": copia la expresión de fecha tal como se dijo; si no se dijo, deja "".
 - "minuto": usa la marca [hh:mm:ss] de la línea donde aparece, o "".
 - "temas": conceptos de la materia como posibles nombres de nota (p. ej. "Integración por partes").
+- "curso_sugerido" y "profesor_sugerido": solo si el nombre de la materia o del profesor se dice en la clase
+  o aparece en el "Evento de calendario" que se te da; si no hay certeza, deja "". Nunca los adivines.
 - Escribe en español, con frases claras y breves.
 - Hablantes: P = Profesor, Y = el estudiante que graba, E1/E2 = otros participantes."""
 
 MERGE_SYSTEM = """Eres un asistente académico. Recibes resultados parciales extraídos durante una clase
 universitaria (tareas, puntos y temas por bloque) y un extracto de la transcripción.
 Únelos en un resumen final sin duplicados. No inventes información que no esté en los datos.
-"fecha_texto" se copia tal cual; "minuto" usa marcas [hh:mm:ss] existentes."""
+"fecha_texto" se copia tal cual; "minuto" usa marcas [hh:mm:ss] existentes.
+"curso_sugerido" y "profesor_sugerido" solo si constan en la transcripción o en el "Evento de calendario"; si no, "". """
 
 LIVE_SYSTEM = """Eres un asistente que acompaña una clase universitaria en vivo. Recibes SOLO el fragmento
 nuevo de la transcripción y un estado breve de lo ya detectado. Devuelve únicamente lo NUEVO:

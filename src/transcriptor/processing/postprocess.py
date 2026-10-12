@@ -36,6 +36,11 @@ MAP_REDUCE_TOKENS = 40_000
 BLOCK_TOKENS = 15_000
 
 
+def _header(course: str, calendar_hint: str) -> str:
+    hint = f"Evento de calendario: {calendar_hint}\n" if calendar_hint else ""
+    return f"Curso: {course}\n{hint}"
+
+
 def from_llm(result: LLMClassSummary, class_day: date) -> ClassSummary:
     tasks = [
         TaskItem(
@@ -66,6 +71,8 @@ def from_llm(result: LLMClassSummary, class_day: date) -> ClassSummary:
         topics=topics[:8],
         tasks=tasks,
         source="llm",
+        suggested_course=result.curso_sugerido.strip(),
+        suggested_teacher=result.profesor_sugerido.strip(),
     )
 
 
@@ -99,11 +106,18 @@ class PostProcessor:
         self.tokens_used += resp.usage.total
         return result
 
-    def summary_request(self, segments: list[Segment], course: str) -> LLMRequest:
+    def summary_request(
+        self, segments: list[Segment], course: str, calendar_hint: str = ""
+    ) -> LLMRequest:
         """Petición de una clase completa (también se usa para el procesamiento por lotes)."""
         return LLMRequest(
             system=SUMMARY_SYSTEM,
-            messages=[LLMMessage("user", f"Curso: {course}\nTranscripción:\n{compact_transcript(segments)}")],
+            messages=[
+                LLMMessage(
+                    "user",
+                    f"{_header(course, calendar_hint)}Transcripción:\n{compact_transcript(segments)}",
+                )
+            ],
             max_tokens=3000,
             tier=self.tier,
         )
@@ -114,22 +128,28 @@ class PostProcessor:
         class_day: date,
         course: str,
         partials: list[ChunkInsights] | None = None,
+        calendar_hint: str = "",
     ) -> tuple[ClassSummary, bool]:
         """Devuelve (resumen, procesado_con_llm). Nunca lanza: si el LLM falla, usa el modo local."""
         if not segments:
             return ClassSummary(source="local"), False
         if self.provider.available:
             try:
-                return from_llm(self._llm_summary(segments, course, partials), class_day), True
+                result = self._llm_summary(segments, course, partials, calendar_hint)
+                return from_llm(result, class_day), True
             except LLMError as exc:
                 log.warning("Extracción con IA no disponible (%s); se usa el modo local", exc)
         return local_summary(segments, class_day), False
 
     def _llm_summary(
-        self, segments: list[Segment], course: str, partials: list[ChunkInsights] | None
+        self,
+        segments: list[Segment],
+        course: str,
+        partials: list[ChunkInsights] | None,
+        calendar_hint: str = "",
     ) -> LLMClassSummary:
         transcript = compact_transcript(segments)
-        header = f"Curso: {course}\n"
+        header = _header(course, calendar_hint)
         if partials:
             # Ya se extrajo por bloques durante la clase: solo se unen (barato).
             data = json.dumps([p.model_dump() for p in partials], ensure_ascii=False)
@@ -161,4 +181,4 @@ class PostProcessor:
             )
             for b in blocks
         ]
-        return self._llm_summary(segments, course, parts)
+        return self._llm_summary(segments, course, parts, calendar_hint)

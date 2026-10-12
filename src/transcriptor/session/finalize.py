@@ -25,6 +25,7 @@ from transcriptor.asr.base import Segment, TranscribeOptions, Transcriber
 from transcriptor.audio.decode import decode_file
 from transcriptor.audio.retention import finalize_audio
 from transcriptor.audio.types import SAMPLE_RATE
+from transcriptor.calendar.ics import CalendarEntry
 from transcriptor.config.models import AppConfig, Course
 from transcriptor.events import EventBus
 from transcriptor.links.builder import LinkBuilder
@@ -36,6 +37,7 @@ from transcriptor.processing.postprocess import PostProcessor, from_llm
 from transcriptor.search.index import SearchIndex
 from transcriptor.session.models import ClassSummary, RecordingSession, TaskItem
 from transcriptor.session.store import SessionStore
+from transcriptor.session.suggest import build_suggestion, calendar_hint
 from transcriptor.speakers.embedder import SpeakerEmbedder
 from transcriptor.speakers.identifier import ME, PARTICIPANT, TEACHER, SpeakerIdentifier
 from transcriptor.speakers.profiles import SpeakerProfileStore
@@ -55,6 +57,7 @@ class FinalizeDeps:
     speaker_embedder: SpeakerEmbedder | None
     profiles: SpeakerProfileStore
     task_checker: object | None = None  # CalendarService.cross_check (Canvas)
+    schedule: object | None = None  # CalendarService.event_during (Google Calendar)
 
 
 class Finalizer:
@@ -97,13 +100,15 @@ class Finalizer:
         self.writer.write_transcript_files(session, segments)
 
         self._step(session, "Extrayendo resumen, tareas y temas")
+        entry = self._calendar_event(session)
         summary, used_llm = self.d.postprocessor.summarize(
-            segments, session.day, course.name, partials
+            segments, session.day, course.name, partials, calendar_hint(entry)
         )
         session.summary = summary
         session.llm_processed = used_llm
         session.llm_tokens += self.d.postprocessor.tokens_used
         self._cross_check(summary.tasks, course.name)
+        self._suggest_course(session, course, entry)
 
         self._step(session, "Creando la nota y sus relaciones")
         self.write_note(session, segments)
@@ -237,6 +242,31 @@ class Finalizer:
         except Exception:
             log.exception("No se pudo comparar con el calendario de la universidad")
 
+    def _calendar_event(self, session: RecordingSession) -> CalendarEntry | None:
+        """Evento de Google Calendar que coincide con la hora de la clase (si está conectado)."""
+        schedule = self.d.schedule
+        if schedule is None:
+            return None
+        try:
+            return schedule.event_during(session.started_at, session.ended_at)  # type: ignore[attr-defined,no-any-return]
+        except Exception:
+            log.exception("No se pudo leer el evento de la clase en Google Calendar")
+            return None
+
+    def _suggest_course(
+        self, session: RecordingSession, course: Course, entry: CalendarEntry | None
+    ) -> None:
+        """Guarda la propuesta de curso/profesor; la interfaz pregunta, nunca se aplica sola."""
+        if session.suggestion is not None:
+            return  # ya propuesta (o resuelta): no se vuelve a preguntar
+        use_ai = self.d.cfg.ai.suggest_courses and session.llm_processed
+        try:
+            session.suggestion = build_suggestion(
+                course, self.d.cfg.courses, entry, session.summary, use_ai
+            )
+        except Exception:
+            log.exception("No se pudo proponer el curso y el profesor")
+
     def write_note(self, session: RecordingSession, segments: list[Segment]) -> Path:
         root = self.d.layout.root
         try:
@@ -293,13 +323,17 @@ class Finalizer:
         segments = self.d.store.load_segments(session.id, "final") or self.d.store.load_segments(
             session.id, "live"
         )
-        summary, used = self.d.postprocessor.summarize(segments, session.day, course.name)
+        entry = self._calendar_event(session)
+        summary, used = self.d.postprocessor.summarize(
+            segments, session.day, course.name, calendar_hint=calendar_hint(entry)
+        )
         if not used:
             return session
         session.summary = summary
         session.llm_processed = True
         session.llm_tokens += self.d.postprocessor.tokens_used
         self._cross_check(summary.tasks, course.name)
+        self._suggest_course(session, course, entry)
         self.write_note(session, segments)
         self.d.store.save(session)
         self.d.bus.emit("session_updated", session_id=session.id)
@@ -315,6 +349,7 @@ class Finalizer:
         session.llm_processed = True
         session.llm_tokens += tokens
         self._cross_check(session.summary.tasks, course.name)
+        self._suggest_course(session, course, self._calendar_event(session))
         self.write_note(session, segments)
         self.d.store.save(session)
         self.d.bus.emit("session_updated", session_id=session.id)
