@@ -1,5 +1,8 @@
 # Cambios
 
+## Sin publicar
+- Asistente: el paso 6 (Obsidian) ya no muestra «Omitir», que llevaba a una página en blanco; «Terminar» funciona sin carpetas excluidas y aunque falle el análisis de la bóveda.
+
 ## 0.1.0 — 2026-10-12
 Primera versión completa (alfa interna).
 
