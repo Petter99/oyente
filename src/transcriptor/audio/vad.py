@@ -7,6 +7,7 @@ detector por energía (suficiente para pruebas y equipos sin el modelo).
 from __future__ import annotations
 
 import logging
+import threading
 from collections.abc import Iterator
 from dataclasses import dataclass
 from typing import Protocol
@@ -25,7 +26,7 @@ class SpeechDetector(Protocol):
 
 
 class SileroDetector:
-    def __init__(self, threshold: float = 0.5, min_silence_ms: int = 500) -> None:
+    def __init__(self, threshold: float = 0.5, min_silence_ms: int = 300) -> None:
         from faster_whisper.vad import VadOptions, get_speech_timestamps
 
         self._fn = get_speech_timestamps
@@ -91,10 +92,11 @@ def default_detector() -> SpeechDetector:
 
 @dataclass
 class SegmenterConfig:
-    min_silence_s: float = 0.6
-    max_utterance_s: float = 25.0
+    # Frases cortas = el texto aparece antes (latencia ≈ duración de la frase + transcripción).
+    min_silence_s: float = 0.4
+    max_utterance_s: float = 5.0
     pad_s: float = 0.15
-    step_s: float = 0.5
+    step_s: float = 0.25
 
 
 class StreamingSegmenter:
@@ -109,9 +111,21 @@ class StreamingSegmenter:
         self._buf = np.zeros(0, dtype=np.float32)
         self._offset = 0  # muestra absoluta del inicio de _buf
         self._since_check = 0
+        self._lock = threading.Lock()  # protege _buf/_offset frente a peek() (otro hilo)
+
+    def peek(self) -> tuple[float, Samples]:
+        """Audio con voz de la frase en curso (aún sin cerrar): para el texto provisional."""
+        with self._lock:
+            buf, offset = self._buf, self._offset
+        spans = self.detector.speech_spans(buf) if buf.size else []
+        if not spans:
+            return 0.0, np.zeros(0, dtype=np.float32)
+        first = max(0, spans[0][0] - int(self.cfg.pad_s * SAMPLE_RATE))
+        return (offset + first) / SAMPLE_RATE, buf[first:].copy()
 
     def feed(self, samples: Samples) -> Iterator[Utterance]:
-        self._buf = np.concatenate([self._buf, samples.astype(np.float32)])
+        with self._lock:
+            self._buf = np.concatenate([self._buf, samples.astype(np.float32)])
         self._since_check += samples.size
         if self._since_check < self.cfg.step_s * SAMPLE_RATE:
             return
@@ -136,8 +150,9 @@ class StreamingSegmenter:
         return utt
 
     def _drop(self, n: int) -> None:
-        self._buf = self._buf[n:]
-        self._offset += n
+        with self._lock:
+            self._buf = self._buf[n:]
+            self._offset += n
 
     def _process(self, final: bool) -> Iterator[Utterance]:
         while self._buf.size:

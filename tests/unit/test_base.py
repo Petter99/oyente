@@ -181,7 +181,7 @@ def test_t1_8_renaming_changes_visible_strings() -> None:
     [
         (Hardware("Darwin", "arm64", 10, 16, False, 0), "mlx", "mlx", "large-v3-turbo"),
         (Hardware("Windows", "AMD64", 8, 16, True, 8), "faster-whisper", "cuda", "large-v3-turbo"),
-        (Hardware("Windows", "AMD64", 8, 16, False, 0), "faster-whisper", "cpu", "large-v3-turbo"),
+        (Hardware("Windows", "AMD64", 8, 16, False, 0), "faster-whisper", "cpu", "base"),
         (Hardware("Windows", "AMD64", 2, 4, False, 0), "faster-whisper", "cpu", "small"),
     ],
 )
@@ -199,4 +199,6 @@ def test_hardware_plan_cuda_without_libs_uses_cpu() -> None:
     # GPU NVIDIA detectada pero sin cuBLAS (cublas64_12.dll): CUDA fallaría al transcribir.
     plan = plan_asr(Hardware("Windows", "AMD64", 8, 16, True, 8, cuda_libs=False))
     assert (plan.device, plan.compute_type) == ("cpu", "int8")
-    assert plan.live_model == "large-v3-turbo"
+    # En CPU el modelo en vivo debe ir más rápido que el audio (turbo no lo logra).
+    assert plan.live_model == "base"
+    assert plan.final_model == "large-v3"

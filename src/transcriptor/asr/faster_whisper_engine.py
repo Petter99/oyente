@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import threading
 from pathlib import Path
 from typing import Any
@@ -53,6 +54,8 @@ class FasterWhisperTranscriber:
                 self.model_name,
                 device=self.device,
                 compute_type=self.compute_type,
+                # CTranslate2 usa 4 hilos por defecto: en equipos de 8+ núcleos se desperdicia CPU.
+                cpu_threads=min(8, os.cpu_count() or 4) if self.device == "cpu" else 0,
                 download_root=str(models_dir() / "whisper"),
             )
         return self._model
@@ -84,7 +87,8 @@ class FasterWhisperTranscriber:
                 condition_on_previous_text=False,
                 initial_prompt=glossary_prompt(opts.glossary),
                 hotwords=" ".join(opts.glossary) or None,
-                word_timestamps=opts.word_timestamps,
+                word_timestamps=opts.word_timestamps
+                and not self.live,  # en vivo cuesta tiempo y no se usa
                 vad_filter=vad,
             )
             out = [self._convert(s) for s in segments]

@@ -66,6 +66,8 @@ class LiveState:
     error: str | None = None
     queue: int = 0
     stopping: bool = False
+    partials: dict[str, str] = field(default_factory=dict)  # texto provisional por canal
+    committed_end: dict[str, float] = field(default_factory=dict)
     version: int = 0  # cambia con cada novedad (para refrescar la UI)
 
     def bump(self) -> None:
@@ -447,11 +449,18 @@ class AppServices:
         if t == "segment" and live.session is not None:
             seg: Segment = event.data["segment"]
             live.segments.append(seg)
+            live.partials.pop(seg.channel, None)  # el definitivo reemplaza al provisional
+            live.committed_end[seg.channel] = max(live.committed_end.get(seg.channel, 0.0), seg.end)
             if live.assistant is not None:
                 live.assistant.on_segment(seg)
             if len(live.segments) % 15 == 0:
                 threading.Thread(target=self._related_now, daemon=True).start()
             live.bump()
+        elif t == "partial" and live.session is not None:
+            channel = event.data["channel"]
+            if event.data["start"] >= live.committed_end.get(channel, 0.0) - 0.3:
+                live.partials[channel] = event.data["text"]  # si no, ya se confirmó: es viejo
+                live.bump()
         elif t == "insights":
             ins = event.data["insights"]
             live.insights.append({"t": event.data.get("start", 0.0), **ins.model_dump()})
@@ -509,7 +518,11 @@ class AppServices:
             return 0
         pending = [s for s in self.pending_llm_sessions() if s.id not in self.batched_sessions()]
         anthropic_provider = self._anthropic()
-        if anthropic_provider is not None and self.cfg.ai.use_batch_for_pending and len(pending) >= 2:
+        if (
+            anthropic_provider is not None
+            and self.cfg.ai.use_batch_for_pending
+            and len(pending) >= 2
+        ):
             return self.submit_pending_batch(anthropic_provider, pending)
         fin = self.finalizer(final_transcriber=_NoTranscriber())
         done = 0
@@ -559,15 +572,22 @@ class AppServices:
         post = PostProcessor(self.provider, self.cfg.ai.extraction_tier)
         items = []
         for s in sessions:
-            segments = self.store.load_segments(s.id, "final") or self.store.load_segments(s.id, "live")
+            segments = self.store.load_segments(s.id, "final") or self.store.load_segments(
+                s.id, "live"
+            )
             if segments:
                 items.append((s.id, post.summary_request(segments, s.course_name), LLMClassSummary))
         if not items:
             return 0
         batch_id = provider.submit_batch(items)
         batches = self._load_batches()
-        batches.append({"id": batch_id, "sessions": [i[0] for i in items],
-                        "created": datetime.now().isoformat()})
+        batches.append(
+            {
+                "id": batch_id,
+                "sessions": [i[0] for i in items],
+                "created": datetime.now().isoformat(),
+            }
+        )
         self._save_batches(batches)
         self.notices.append(("info", f"{len(items)} clases enviadas a procesar por lotes."))
         return len(items)
@@ -598,7 +618,9 @@ class AppServices:
                 if session is None or result is None or resp is None:
                     continue
                 self.ledger.record(resp)
-                fin.apply_llm_result(session, self.course(session.course_id), result, resp.usage.total)
+                fin.apply_llm_result(
+                    session, self.course(session.course_id), result, resp.usage.total
+                )
                 applied += 1
         self._save_batches(remaining)
         return applied

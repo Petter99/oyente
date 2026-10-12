@@ -61,7 +61,9 @@ def _nvidia() -> tuple[bool, float]:
 
 def _cuda_libs_available() -> bool:
     """¿Se puede cargar cuBLAS de CUDA 12? Sin ella faster-whisper falla al transcribir en GPU."""
-    names = {"Windows": ["cublas64_12.dll"], "Linux": ["libcublas.so.12"]}.get(platform.system(), [])
+    names = {"Windows": ["cublas64_12.dll"], "Linux": ["libcublas.so.12"]}.get(
+        platform.system(), []
+    )
     for name in names:
         try:
             ctypes.CDLL(name, winmode=0)  # winmode=0: busca también en PATH, como CTranslate2
@@ -117,10 +119,13 @@ def plan_asr(hw: Hardware, override: str = "auto", mlx_installed: bool | None = 
             "GPU NVIDIA: faster-whisper en CUDA",
         )
     elif hw.ram_gb >= 7.5 and hw.cpu_count >= 4:
-        # Camino principal de la mayoría de portátiles Windows: CPU con int8.
+        # Camino principal de la mayoría de portátiles Windows: CPU con int8. En CPU, turbo
+        # transcribe ~1× tiempo real (la cola crece y el texto llega 30 s tarde) y cada llamada
+        # a «small» cuesta ~2.4 s fijos: en vivo se usa «base» (~0.9 s) y la pasada final corrige
+        # con el modelo grande.
         plan = AsrPlan(
             "faster-whisper",
-            "large-v3-turbo",
+            "base",
             "large-v3",
             "cpu",
             "int8",
