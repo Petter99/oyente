@@ -42,6 +42,9 @@ class _TimedTranscriber(FakeTranscriber):
         return [self._segment(offset, offset + samples.size / SAMPLE_RATE)]
 
 
+DIAG: dict[str, float] = {}
+
+
 def _run(tmp_path: Path, audio: np.ndarray) -> dict[str, list[tuple[float, float, float]]]:
     """Emite ``audio`` en tiempo real; devuelve, por tipo de evento, (inicio, fin, llegada)."""
     bus = EventBus()
@@ -70,10 +73,29 @@ def _run(tmp_path: Path, audio: np.ndarray) -> dict[str, list[tuple[float, float
         tmp_path / "live.txt",
         bus,
     )
+    from transcriptor.audio.recorder import ChannelRecorder
+
+    original_write = ChannelRecorder.write
+    spent = {"write": 0.0}
+
+    def timed_write(self: ChannelRecorder, samples: Samples) -> float:
+        t = time.monotonic()
+        try:
+            return original_write(self, samples)
+        finally:
+            spent["write"] += time.monotonic() - t
+
+    ChannelRecorder.write = timed_write  # type: ignore[method-assign]
     t0 = time.monotonic()
-    rec.start()
-    source.finished.wait(audio.size / SAMPLE_RATE + 10)
-    rec.stop()
+    try:
+        rec.start()
+        source.finished.wait(audio.size / SAMPLE_RATE + 10)
+        DIAG["fed_after_s"] = round(time.monotonic() - t0, 2)
+        rec.stop()
+    finally:
+        ChannelRecorder.write = original_write  # type: ignore[method-assign]
+    DIAG["audio_s"] = round(audio.size / SAMPLE_RATE, 2)
+    DIAG["flac_write_total_s"] = round(spent["write"], 2)
     # Se convierte la llegada a «segundos desde el inicio» para compararla con el audio.
     return {k: [(s, e, a - t0) for s, e, a in v] for k, v in seen.items()}
 
@@ -88,7 +110,7 @@ def test_final_text_arrives_within_3_seconds(tmp_path: Path) -> None:
     final = seen["segment"]
     assert len(final) >= 2, "la habla continua debe partirse en varias frases"
     lags = [arrived - end for _, end, arrived in final]
-    assert max(lags) <= MAX_LATENCY_S, f"latencias (s): {[round(x, 2) for x in lags]}"
+    assert max(lags) <= MAX_LATENCY_S, f"latencias (s): {[round(x, 2) for x in lags]} diag={DIAG}"
     assert float(np.median(lags)) <= MEDIAN_GOAL_S
 
 
@@ -102,5 +124,5 @@ def test_provisional_text_follows_speech_almost_live(tmp_path: Path) -> None:
     assert first_lag <= MAX_LATENCY_S, f"primer texto a los {first_lag:.2f} s de empezar a hablar"
     # Cada actualización cubre hasta el instante «end»: no puede ir muy por detrás de él.
     lags = [arrived - end for _, end, arrived in partial]
-    assert max(lags) <= MAX_LATENCY_S, f"retrasos (s): {[round(x, 2) for x in lags]}"
+    assert max(lags) <= MAX_LATENCY_S, f"retrasos (s): {[round(x, 2) for x in lags]} diag={DIAG}"
     assert float(np.median(lags)) <= MEDIAN_GOAL_S
