@@ -61,6 +61,15 @@ def onboarding_page(svc: AppServices) -> None:
         progress.refresh()
         render()
 
+    def advance() -> None:
+        """Siguiente paso; tras el último (también al omitirlo) termina el asistente."""
+        if state["step"] + 1 >= len(STEPS):
+            svc.cfg.ui.onboarding_done = True
+            svc.save_config()
+            ui.navigate.to("/")
+        else:
+            go(state["step"] + 1)
+
     def nav(
         back: bool = True, skip: bool = True, next_label: str = "Continuar", on_next=None
     ) -> None:  # type: ignore[no-untyped-def]
@@ -71,19 +80,14 @@ def onboarding_page(svc: AppServices) -> None:
                 ui.element("div")
             with ui.row().classes("gap-2"):
                 if skip:
-                    ui.button("Omitir", on_click=lambda: go(state["step"] + 1)).props("flat")
+                    ui.button("Omitir", on_click=advance).props("flat")
 
                 async def nxt() -> None:
                     if on_next is not None:
                         ok = await on_next() if callable(on_next) else True
                         if ok is False:
                             return
-                    if state["step"] + 1 >= len(STEPS):
-                        svc.cfg.ui.onboarding_done = True
-                        svc.save_config()
-                        ui.navigate.to("/")
-                    else:
-                        go(state["step"] + 1)
+                    advance()
 
                 ui.button(next_label, on_click=nxt).classes("btn-primary")
 
