@@ -1,6 +1,6 @@
 # Publicar en GitHub, compilar y firmar
 
-## 1. Subir el repositorio privado (una vez)
+## 1. Subir el repositorio (una vez)
 
 El repositorio local ya está listo (historial revisado con `gitleaks`, sin secretos ni audios).
 Los commits usan el correo `mcanil1999@gmail.com`; si prefieres no exponerlo, antes de subir:
@@ -14,7 +14,7 @@ En la terminal del proyecto (en Claude Code, con `!` delante):
 gh auth login                    # GitHub.com → HTTPS → Login with a web browser
                                  # (contraseña y verificación en dos pasos solo en la web de GitHub)
 gitleaks detect --config .gitleaks.toml   # comprobación final: «no leaks found»
-gh repo create oyente --private --source . --push
+gh repo create oyente --public --source . --push
 ```
 
 Si no recuerdas la contraseña: github.com → *Sign in* → **Forgot password?** con `mcanil1999@gmail.com`.
@@ -62,7 +62,7 @@ compila con PyInstaller, hace la prueba de humo del `.exe` y genera
 
 1. Sube la versión en `pyproject.toml` y `src/transcriptor/__init__.py`, y anota `CHANGELOG.md`.
 2. `git tag v1.0.0 && git push --tags` (ejecuta las pruebas de macOS en GitHub).
-3. Compila en Windows y en Mac, y crea el Release privado:
+3. Compila en Windows y en Mac, y crea el Release público:
    `gh release create v1.0.0 dist/*-Setup-*.exe dist/*.dmg --notes-file CHANGELOG.md`.
 
 ## 6. Cambiar el nombre de la app
