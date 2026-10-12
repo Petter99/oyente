@@ -2,8 +2,9 @@
 
 ## 1. Subir el repositorio (una vez)
 
-El repositorio local ya está listo (historial revisado con `gitleaks`, sin secretos ni audios).
-Los commits usan el correo `mcanil1999@gmail.com`; si prefieres no exponerlo, antes de subir:
+El repositorio ya está publicado en https://github.com/Petter99/oyente (público, licencia MIT;
+historial revisado sin secretos ni audios). Estos pasos describen cómo se creó y sirven para rehacerlo.
+Los commits usan el correo `mcanil1999@gmail.com`, visible públicamente; si prefieres no exponerlo, antes de subir:
 GitHub → Settings → Emails → *Keep my email address private*, copia la dirección
 `…@users.noreply.github.com` y ejecuta `git config user.email "<esa dirección>"` (y reescribe el
 autor de los commits existentes si quieres).
