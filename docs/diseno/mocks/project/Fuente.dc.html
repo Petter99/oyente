@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Nueva grabación</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#0A6CDB}a:hover{color:#0853A8}
+</style>
+</helmet>
+<div style="width: 1280px; height: 800px; position: relative; display: flex; background: #FFFFFF; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif; color: #1D1D1F; font-size: 13px">
+<dc-import name="Sidebar" active="inicio" platform="mac" hint-size="232px,800px"></dc-import>
+<div aria-hidden="true" style="flex: 1; display: flex; flex-direction: column; gap: 20px; padding: 76px 28px 24px">
+<div style="height: 130px; border-radius: 14px; background: #F4F3F1"></div>
+<div style="flex: 1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px"><div style="border-radius: 14px; background: #F4F3F1"></div><div style="border-radius: 14px; background: #F4F3F1"></div></div>
+</div>
+<div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(30, 28, 26, 0.28)"></div>
+<section role="dialog" aria-labelledby="nueva-h" style="position: absolute; top: 40px; left: 50%; transform: translateX(-50%); width: 620px; box-sizing: border-box; background: #FFFFFF; border-radius: 14px; box-shadow: 0 0 0 0.5px rgba(0,0,0,0.2), 0 22px 60px rgba(0,0,0,0.28); padding: 24px 26px 20px; display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; align-items: center; gap: 12px">
+<h2 id="nueva-h" style="margin: 0; font-size: 17px; font-weight: 700; flex: 1">Nueva grabación</h2>
+<label style="display: flex; align-items: center; gap: 8px; color: #55555A">Curso
+<select style="height: 28px; padding: 0 8px; border: 1px solid #D8D6D2; border-radius: 7px; background: #FFFFFF; font: inherit; color: #1D1D1F">
+<option>Cálculo II</option><option>Física I</option><option>Programación II</option><option>Estadística</option>
+</select>
+</label>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px">
+<span style="font-weight: 600">¿De dónde viene el audio de la clase?</span>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+<button type="button" aria-pressed="{{pApp}}" onClick="{{pickApp}}" style="{{sApp}}">
+<svg width="22" height="22" viewBox="0 0 16 16" fill="none" stroke="#0A6CDB" stroke-width="1.3" aria-hidden="true"><rect x="2" y="3" width="12" height="10" rx="2"></rect><path d="M2 6h12"></path></svg>
+<span style="display: flex; flex-direction: column; gap: 3px; text-align: left"><span style="font-weight: 600; display: flex; gap: 6px; align-items: center">Una aplicación<span style="font-size: 10.5px; font-weight: 600; color: #0A5BBE; background: #E6EFFB; padding: 1px 6px; border-radius: 8px">Recomendado</span></span><span style="font-size: 12px; color: #55555A">Solo el navegador o la app de la llamada. Cualquier navegador.</span></span>
+</button>
+<button type="button" aria-pressed="{{pTab}}" onClick="{{pickTab}}" style="{{sTab}}">
+<svg width="22" height="22" viewBox="0 0 16 16" fill="none" stroke="#0A6CDB" stroke-width="1.3" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 13.5v-9h4l1-2h4l1 2h3v9z"></path></svg>
+<span style="display: flex; flex-direction: column; gap: 3px; text-align: left"><span style="font-weight: 600">Una pestaña del navegador</span><span style="font-size: 12px; color: #55555A">Solo la pestaña de la clase. Chrome o Edge.</span></span>
+</button>
+<button type="button" aria-pressed="{{pSys}}" onClick="{{pickSys}}" style="{{sSys}}">
+<svg width="22" height="22" viewBox="0 0 16 16" fill="none" stroke="#0A6CDB" stroke-width="1.3" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 6h2.5L8.5 3v10L5 10H2.5z"></path><path d="M11 5.5a3.5 3.5 0 0 1 0 5M12.8 3.8a6 6 0 0 1 0 8.4"></path></svg>
+<span style="display: flex; flex-direction: column; gap: 3px; text-align: left"><span style="font-weight: 600">Todo el sistema</span><span style="font-size: 12px; color: #55555A">Todo lo que suena en el equipo.</span></span>
+</button>
+<button type="button" aria-pressed="{{pMic}}" onClick="{{pickMic}}" style="{{sMic}}">
+<svg width="22" height="22" viewBox="0 0 16 16" fill="none" stroke="#0A6CDB" stroke-width="1.3" aria-hidden="true"><rect x="6" y="1.8" width="4" height="8" rx="2"></rect><path d="M3.5 8a4.5 4.5 0 0 0 9 0M8 12.5v1.8"></path></svg>
+<span style="display: flex; flex-direction: column; gap: 3px; text-align: left"><span style="font-weight: 600">Solo micrófono</span><span style="font-size: 12px; color: #55555A">Clase presencial en el aula.</span></span>
+</button>
+</div>
+</div>
+<sc-if value="{{isApp}}" hint-placeholder-val="{{ true }}">
+<div style="border: 1px solid #E6E4E1; border-radius: 10px; overflow: hidden">
+<div style="padding: 8px 12px; font-size: 11px; font-weight: 600; color: #6E6E73; background: #FAF9F8; border-bottom: 1px solid #EEECE9">APPS QUE ESTÁN SONANDO AHORA</div>
+<label style="display: flex; align-items: center; gap: 10px; padding: 9px 12px; background: #EEF4FD"><input type="radio" name="app" checked style="accent-color: #0A6CDB"><span style="flex: 1; font-weight: 600">Google Chrome</span><span style="font-size: 11.5px; color: #55555A">meet.google.com</span><span aria-hidden="true" style="display: flex; gap: 2px; align-items: flex-end; height: 14px"><span style="width: 3px; height: 6px; background: #1F9D55; border-radius: 1px"></span><span style="width: 3px; height: 12px; background: #1F9D55; border-radius: 1px"></span><span style="width: 3px; height: 9px; background: #1F9D55; border-radius: 1px"></span><span style="width: 3px; height: 14px; background: #1F9D55; border-radius: 1px"></span></span></label>
+<label style="display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-top: 1px solid #F0EEEB"><input type="radio" name="app" style="accent-color: #0A6CDB"><span style="flex: 1">zoom.us</span><span style="font-size: 11.5px; color: #6E6E73">en silencio</span></label>
+<label style="display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-top: 1px solid #F0EEEB"><input type="radio" name="app" style="accent-color: #0A6CDB"><span style="flex: 1">Microsoft Teams</span><span style="font-size: 11.5px; color: #6E6E73">en silencio</span></label>
+</div>
+</sc-if>
+<sc-if value="{{isTab}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; border: 1px solid #E6E4E1; border-radius: 10px">
+<span>Al empezar, Chrome te pedirá elegir la pestaña. Deja marcada <strong>“Compartir audio de la pestaña”</strong>.</span>
+<div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; background: #F4F7FC">
+<span style="flex: 1; font-size: 12px; color: #3F3F44"><strong style="color: #1D1D1F">Opcional:</strong> con la extensión eliges la pestaña con un clic. No está instalada.</span>
+<a href="AjustesAudio.dc.html" style="font-size: 12px; text-decoration: none; font-weight: 600">Instalar extensión…</a>
+<button type="button" style="border: 0; background: transparent; font: inherit; font-size: 12px; color: #55555A; cursor: pointer">Ahora no</button>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{isSys}}" hint-placeholder-val="{{ false }}">
+<div style="padding: 12px 14px; border: 1px solid #E6E4E1; border-radius: 10px; color: #3F3F44">También se grabarán notificaciones, música u otras apps. Si la clase está en el navegador, es mejor elegir <strong>Una aplicación</strong>.</div>
+</sc-if>
+<sc-if value="{{isMic}}" hint-placeholder-val="{{ false }}">
+<div style="padding: 12px 14px; border: 1px solid #E6E4E1; border-radius: 10px; color: #3F3F44">Se grabará solo el micrófono elegido abajo. Acércalo al profesor para mejor precisión.</div>
+</sc-if>
+<div style="display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid #EEECE9; border-bottom: 1px solid #EEECE9">
+<label style="display: flex; align-items: center; gap: 8px; flex: 1"><input type="checkbox" checked style="width: 16px; height: 16px; accent-color: #0A6CDB">Incluir mi micrófono</label>
+<select aria-label="Micrófono" style="height: 28px; padding: 0 8px; border: 1px solid #D8D6D2; border-radius: 7px; background: #FFFFFF; font: inherit; color: #1D1D1F"><option>Micrófono del MacBook Pro</option><option>AirPods</option></select>
+<span aria-label="Nivel del micrófono" role="img" style="width: 90px; height: 6px; border-radius: 3px; background: #E8E6E3; overflow: hidden; display: flex"><span style="width: 38%; background: #1F9D55"></span></span>
+</div>
+<div style="display: flex; align-items: center; gap: 10px">
+<span style="flex: 1; font-size: 12px; color: #55555A">Audio: se guarda 30 días en Opus (≈ 22 MB por hora). <a href="AjustesAudio.dc.html" style="text-decoration: none">Cambiar</a></span>
+<a href="Main.dc.html" style="height: 30px; padding: 0 14px; border-radius: 8px; border: 1px solid #D8D6D2; background: #FFFFFF; color: #1D1D1F; text-decoration: none; display: flex; align-items: center">Cancelar</a>
+<a href="Grabando.dc.html" style="height: 30px; padding: 0 16px; border-radius: 8px; background: #D92D3A; color: #FFFFFF; text-decoration: none; display: flex; align-items: center; gap: 8px; font-weight: 600"><span style="width: 8px; height: 8px; border-radius: 50%; background: #FFFFFF"></span>Empezar a grabar</a>
+</div>
+</section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":800}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { src: 'app' };
+  }
+  renderVals() {
+    const src = this.state.src;
+    const base = 'display: flex; align-items: flex-start; gap: 12px; padding: 14px; border-radius: 10px; font: inherit; color: #1D1D1F; cursor: pointer; text-align: left;';
+    const on = base + ' border: 2px solid #0A6CDB; background: #F4F8FE; margin: 0;';
+    const off = base + ' border: 1px solid #E0DEDA; background: #FFFFFF; margin: 1px;';
+    const st = (k) => (src === k ? on : off);
+    const pick = (k) => () => this.setState({ src: k });
+    return {
+      sApp: st('app'), sTab: st('tab'), sSys: st('sys'), sMic: st('mic'),
+      pApp: src === 'app', pTab: src === 'tab', pSys: src === 'sys', pMic: src === 'mic',
+      isApp: src === 'app', isTab: src === 'tab', isSys: src === 'sys', isMic: src === 'mic',
+      pickApp: pick('app'), pickTab: pick('tab'), pickSys: pick('sys'), pickMic: pick('mic')
+    };
+  }
+}
+</script>
+</body>
+</html>

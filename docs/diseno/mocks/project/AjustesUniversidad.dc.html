@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Configuración · Calendarios de la universidad</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#0A6CDB}a:hover{color:#0853A8}
+</style>
+</helmet>
+<div style="width: 880px; height: 860px; display: flex; flex-direction: column; background: #F7F6F4; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif; color: #1D1D1F; font-size: 13px">
+<dc-import name="SettingsTabs" active="uni" hint-size="880px,84px"></dc-import>
+<div style="flex: 1; min-height: 0; overflow: hidden; padding: 20px 60px; display: flex; flex-direction: column; gap: 16px">
+<section aria-labelledby="u1" style="display: flex; flex-direction: column; gap: 6px">
+<h2 id="u1" style="margin: 0 0 0 4px; font-size: 12px; font-weight: 600; color: #55555A">Recomendado · importar a Google Calendar</h2>
+<div style="background: #FFFFFF; border: 1px solid #E6E4E1; border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: center; gap: 10px">
+<span style="flex: 1">¿Qué plataforma usa tu universidad?</span>
+<div role="group" aria-label="Plataforma" style="display: flex; padding: 2px; border-radius: 8px; background: #EEEDEB">
+<button type="button" aria-pressed="{{pCanvas}}" onClick="{{setCanvas}}" style="{{bCanvas}}">Canvas</button>
+<button type="button" aria-pressed="{{pMoodle}}" onClick="{{setMoodle}}" style="{{bMoodle}}">Moodle</button>
+<button type="button" aria-pressed="{{pBb}}" onClick="{{setBb}}" style="{{bBb}}">Blackboard</button>
+<button type="button" aria-pressed="{{pOtra}}" onClick="{{setOtra}}" style="{{bOtra}}">Otra</button>
+</div>
+</div>
+<ol style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; line-height: 1.5">
+<li>En {{nombre}}: <strong>{{paso1}}</strong> y copia el enlace.</li>
+<li>Pulsa <strong>Abrir Google Calendar</strong>: se abre “Agregar calendario desde URL”.</li>
+<li>Pega el enlace y pulsa <strong>Agregar calendario</strong>. Google lo actualiza cada pocas horas.</li>
+</ol>
+<div role="img" aria-label="Espacio para la captura de pantalla del paso 1" style="height: 120px; border-radius: 8px; border: 1px dashed #C9C7C3; background: #FAF9F8; display: flex; align-items: center; justify-content: center; color: #55555A; font-size: 12px">[Captura de {{nombre}}: dónde está el enlace]</div>
+<div style="display: flex; gap: 8px">
+<button type="button" style="height: 30px; padding: 0 14px; border: 0; border-radius: 7px; background: #0A6CDB; color: #FFFFFF; font: inherit; font-weight: 600; cursor: pointer">Abrir Google Calendar</button>
+<button type="button" style="height: 30px; padding: 0 14px; border: 1px solid #D8D6D2; border-radius: 7px; background: #FFFFFF; font: inherit; cursor: pointer">Ya lo hice</button>
+</div>
+</div>
+</section>
+<section aria-labelledby="u2" style="display: flex; flex-direction: column; gap: 6px">
+<h2 id="u2" style="margin: 0 0 0 4px; font-size: 12px; font-weight: 600; color: #55555A">Sin Google · leer el enlace en este equipo</h2>
+<div style="background: #FFFFFF; border: 1px solid #E6E4E1; border-radius: 10px">
+<div style="display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-bottom: 1px solid #F0EEEB">
+<label for="ics" style="width: 120px">Enlace ICS</label>
+<input id="ics" type="text" placeholder="https://…/feeds/calendars/user_….ics" style="flex: 1; height: 28px; padding: 0 10px; border: 1px solid #D8D6D2; border-radius: 7px; font: inherit">
+<button type="button" style="height: 28px; padding: 0 12px; border: 1px solid #D8D6D2; border-radius: 7px; background: #FFFFFF; font: inherit; font-size: 12px; cursor: pointer">Agregar</button>
+</div>
+<div style="padding: 8px 14px 11px; font-size: 12px; color: #55555A; border-bottom: 1px solid #F0EEEB">El enlace es privado: se guarda en el Llavero y nunca en tu bóveda de Obsidian.</div>
+<div style="display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-bottom: 1px solid #F0EEEB"><span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span>Comparar con lo que dijo el profesor</span><span style="font-size: 12px; color: #55555A">Muestra “Ya está en Canvas” o “Las fechas no coinciden”.</span></span><input type="checkbox" checked aria-label="Comparar con lo que dijo el profesor" style="width: 16px; height: 16px; accent-color: #0A6CDB"></div>
+<div style="display: flex; align-items: center; gap: 12px; padding: 11px 14px"><span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span>Crear tareas en Google Tasks desde Canvas</span><span style="font-size: 12px; color: #55555A">Las entregas oficiales también aparecen como tareas, sin duplicados.</span></span><input type="checkbox" aria-label="Crear tareas en Google Tasks desde Canvas" style="width: 16px; height: 16px; accent-color: #0A6CDB"></div>
+</div>
+</section>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":880,"height":860}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { p: 'canvas' };
+  }
+  renderVals() {
+    const p = this.state.p;
+    const seg = 'height: 26px; padding: 0 12px; border: 0; border-radius: 6px; font: inherit; font-size: 12px; cursor: pointer;';
+    const on = seg + ' background: #FFFFFF; color: #1D1D1F; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,0.15);';
+    const off = seg + ' background: transparent; color: #3F3F44;';
+    const b = (k) => (p === k ? on : off);
+    const set = (k) => () => this.setState({ p: k });
+    const info = {
+      canvas: ['Canvas', 'Calendario → “Fuente de calendario” (Calendar Feed)'],
+      moodle: ['Moodle', 'Calendario → Exportar calendario → Todos los cursos → Obtener URL del calendario'],
+      bb: ['Blackboard', 'Calendario → engranaje → Compartir calendario'],
+      otra: ['tu plataforma', 'busca “iCal”, “ICS” o “Exportar / Suscribirse” en el calendario']
+    }[p];
+    return {
+      pCanvas: p === 'canvas', pMoodle: p === 'moodle', pBb: p === 'bb', pOtra: p === 'otra',
+      bCanvas: b('canvas'), bMoodle: b('moodle'), bBb: b('bb'), bOtra: b('otra'),
+      setCanvas: set('canvas'), setMoodle: set('moodle'), setBb: set('bb'), setOtra: set('otra'),
+      nombre: info[0], paso1: info[1]
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Barra de menús</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#0A6CDB}a:hover{color:#0853A8}
+</style>
+</helmet>
+<div style="width: 360px; height: 480px; box-sizing: border-box; background: #F6F5F3; display: flex; flex-direction: column; gap: 14px; padding: 18px; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif; color: #1D1D1F; font-size: 13px">
+<div style="display: flex; align-items: center; gap: 10px">
+<span style="width: 10px; height: 10px; border-radius: 50%; background: #D92D3A; box-shadow: 0 0 0 4px #F9D9DC"></span>
+<span style="font-weight: 700; flex: 1">Grabando · Cálculo II</span>
+<span style="font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums">42:18</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: #55555A">
+<span style="display: flex; align-items: center; gap: 8px"><span style="width: 76px">Google Chrome</span><span role="img" aria-label="Nivel alto" style="flex: 1; height: 5px; border-radius: 3px; background: #E3E1DE; display: flex; overflow: hidden"><span style="width: 72%; background: #1F9D55"></span></span></span>
+<span style="display: flex; align-items: center; gap: 8px"><span style="width: 76px">Micrófono</span><span role="img" aria-label="Nivel bajo" style="flex: 1; height: 5px; border-radius: 3px; background: #E3E1DE; display: flex; overflow: hidden"><span style="width: 12%; background: #1F9D55"></span></span></span>
+</div>
+<div style="background: #FFFFFF; border: 1px solid #E6E4E1; border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; line-height: 1.5">
+<span style="font-size: 11px; font-weight: 600; color: #4B2FB0">PROFESOR · 41:52</span>
+<span>Para el lunes 19 me traen resuelta la hoja de ejercicios cuatro, del uno al diez.</span>
+</div>
+<div style="background: #FFFFFF; border: 1px solid #E6E4E1; border-radius: 10px; padding: 10px 14px; display: flex; align-items: center; gap: 10px">
+<span style="flex: 1; font-size: 12px"><strong>Tarea detectada:</strong> Hoja 4 → lun 19 oct</span>
+<button type="button" style="height: 26px; padding: 0 10px; border: 0; border-radius: 6px; background: #0A6CDB; color: #FFFFFF; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer">Agregar…</button>
+</div>
+<div style="flex: 1"></div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+<button type="button" style="height: 36px; border: 1px solid #D8D6D2; border-radius: 8px; background: #FFFFFF; font: inherit; color: #1D1D1F; cursor: pointer">Pausar</button>
+<a href="Clase.dc.html" style="height: 36px; border-radius: 8px; background: #1D1D1F; color: #FFFFFF; text-decoration: none; display: flex; align-items: center; justify-content: center; font-weight: 600">Detener</a>
+</div>
+<div style="display: flex; flex-direction: column; border-top: 1px solid #E3E1DE; padding-top: 8px">
+<a href="Grabando.dc.html" style="display: flex; justify-content: space-between; padding: 6px 4px; color: #1D1D1F; text-decoration: none"><span>Abrir ventana de grabación</span><span style="color: #6E6E73">⌘1</span></a>
+<a href="Chat.dc.html" style="display: flex; justify-content: space-between; padding: 6px 4px; color: #1D1D1F; text-decoration: none"><span>Preguntar en el chat</span><span style="color: #6E6E73">⌘2</span></a>
+<span style="display: flex; justify-content: space-between; padding: 6px 4px; color: #55555A"><span>Iniciar / detener desde cualquier app</span><span>⌥⌘R</span></span>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":360,"height":480}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

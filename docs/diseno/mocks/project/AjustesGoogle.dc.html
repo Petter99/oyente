@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Configuración · Google</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#0A6CDB}a:hover{color:#0853A8}
+</style>
+</helmet>
+<div style="width: 880px; height: 860px; display: flex; flex-direction: column; background: #F7F6F4; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif; color: #1D1D1F; font-size: 13px">
+<dc-import name="SettingsTabs" active="google" hint-size="880px,84px"></dc-import>
+<div style="flex: 1; min-height: 0; overflow: hidden; padding: 20px 60px; display: flex; flex-direction: column; gap: 16px">
+<sc-if value="{{desconectado}}" hint-placeholder-val="{{ false }}">
+<section style="background: #FFFFFF; border: 1px solid #E6E4E1; border-radius: 10px; padding: 18px; display: flex; align-items: center; gap: 14px">
+<span style="flex: 1; display: flex; flex-direction: column; gap: 4px"><strong style="font-size: 15px">Google no está conectado</strong><span style="color: #3F3F44; line-height: 1.5">Es opcional. La app funciona igual; sin Google puedes exportar los recordatorios como archivo .ics.</span></span>
+<button type="button" onClick="{{toggleCon}}" style="height: 32px; padding: 0 16px; border: 0; border-radius: 8px; background: #0A6CDB; color: #FFFFFF; font: inherit; font-weight: 600; cursor: pointer">Conectar con Google</button>
+</section>
+</sc-if>
+<sc-if value="{{conectado}}" hint-placeholder-val="{{ true }}">
+<section aria-label="Cuenta" style="background: #FFFFFF; border: 1px solid #E6E4E1; border-radius: 10px; padding: 12px 14px; display: flex; align-items: center; gap: 12px">
+<span style="width: 36px; height: 36px; border-radius: 50%; background: #E6EFFB; color: #0A5BBE; font-weight: 700; display: flex; align-items: center; justify-content: center">TU</span>
+<span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><strong>Conectado</strong><span style="color: #55555A">[tu-correo]@gmail.com</span></span>
+<button type="button" onClick="{{toggleCon}}" style="height: 28px; padding: 0 12px; border: 1px solid #D8D6D2; border-radius: 7px; background: #FFFFFF; font: inherit; font-size: 12px; cursor: pointer">Desconectar</button>
+</section>
+<section aria-labelledby="gf" style="display: flex; flex-direction: column; gap: 6px">
+<h2 id="gf" style="margin: 0 0 0 4px; font-size: 12px; font-weight: 600; color: #55555A">Funciones · cada una pide su propio permiso al activarla</h2>
+<div style="background: #FFFFFF; border: 1px solid #E6E4E1; border-radius: 10px">
+<div style="display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-bottom: 1px solid #F0EEEB"><span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><strong>Leer mi horario</strong><span style="font-size: 12px; color: #55555A">Avisa “Cálculo II empieza en 5 min. ¿Grabar?” y preselecciona el curso.</span></span><span style="font-size: 12px; font-weight: 600; color: #1F7A46">Activado</span></div>
+<div style="display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-bottom: 1px solid #F0EEEB"><span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><strong>Recordatorios en Calendar</strong><span style="font-size: 12px; color: #55555A">En un calendario propio, “Clases – {{nombre}}”. No toca tus otros calendarios.</span></span><span style="font-size: 12px; font-weight: 600; color: #1F7A46">Activado</span></div>
+<div style="display: flex; align-items: center; gap: 12px; padding: 11px 14px"><span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><strong>Tareas en Google Tasks</strong><span style="font-size: 12px; color: #55555A">Lista “Tareas de clase”, con enlace a la nota de Obsidian. Si la completas en Tasks, se marca en Obsidian.</span></span><span style="font-size: 12px; font-weight: 600; color: #1F7A46">Activado</span></div>
+</div>
+</section>
+<section aria-labelledby="gp" style="display: flex; flex-direction: column; gap: 6px">
+<h2 id="gp" style="margin: 0 0 0 4px; font-size: 12px; font-weight: 600; color: #55555A">Preferencias</h2>
+<div style="background: #FFFFFF; border: 1px solid #E6E4E1; border-radius: 10px">
+<div style="display: flex; align-items: center; gap: 12px; padding: 9px 14px; border-bottom: 1px solid #F0EEEB"><label for="p1" style="flex: 1">Avisar antes de cada clase</label><select id="p1" style="height: 26px; border: 1px solid #D8D6D2; border-radius: 6px; background: #FFFFFF; font: inherit"><option>5 min antes · preguntar</option><option>Empezar a grabar sola</option><option>No avisar</option></select></div>
+<div style="display: flex; align-items: center; gap: 12px; padding: 9px 14px; border-bottom: 1px solid #F0EEEB"><label for="p2" style="flex: 1">Recordatorio por defecto</label><select id="p2" style="height: 26px; border: 1px solid #D8D6D2; border-radius: 6px; background: #FFFFFF; font: inherit"><option>1 día antes</option><option>2 días antes</option><option>El mismo día</option></select></div>
+<div style="display: flex; align-items: center; gap: 12px; padding: 9px 14px"><label for="p3" style="flex: 1">Agregar tareas automáticamente sin preguntar</label><input id="p3" type="checkbox" style="width: 16px; height: 16px; accent-color: #0A6CDB"></div>
+</div>
+</section>
+<section aria-label="Recomendación" style="background: #F4F8FE; border: 1px solid #D5E3F7; border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px">
+<strong>¿Usas Canvas? Importa tu calendario de actividades a Google Calendar</strong>
+<span style="color: #3F3F44; line-height: 1.5">Así verás todas tus entregas, y la app podrá avisarte si algo no coincide con lo que dijo el profesor.</span>
+<div style="display: flex; gap: 8px"><a href="AjustesUniversidad.dc.html" style="height: 28px; padding: 0 12px; border-radius: 7px; background: #0A6CDB; color: #FFFFFF; text-decoration: none; font-size: 12px; font-weight: 600; display: flex; align-items: center">Ver cómo hacerlo</a><button type="button" style="height: 28px; padding: 0 12px; border: 1px solid #C8D6EC; border-radius: 7px; background: #FFFFFF; font: inherit; font-size: 12px; cursor: pointer">Ya lo hice</button><button type="button" style="height: 28px; padding: 0 12px; border: 0; background: transparent; font: inherit; font-size: 12px; color: #3F3F44; cursor: pointer">Ahora no</button></div>
+</section>
+</sc-if>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"nombre":{"editor":"text","default":"Oyente","section":"Marca"},"$preview":{"width":880,"height":860}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { con: true };
+  }
+  renderVals() {
+    const con = this.state.con;
+    return { nombre: this.props.nombre ?? 'Oyente', conectado: con, desconectado: !con, toggleCon: () => this.setState({ con: !con }) };
+  }
+}
+</script>
+</body>
+</html>

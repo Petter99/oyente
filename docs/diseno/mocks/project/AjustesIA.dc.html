@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Configuración · IA</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#0A6CDB}a:hover{color:#0853A8}
+</style>
+</helmet>
+<div style="width: 880px; height: 860px; display: flex; flex-direction: column; background: #F7F6F4; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif; color: #1D1D1F; font-size: 13px">
+<dc-import name="SettingsTabs" active="ia" hint-size="880px,84px"></dc-import>
+<div style="flex: 1; min-height: 0; overflow: hidden; padding: 22px 60px; display: flex; flex-direction: column; gap: 18px">
+<section aria-labelledby="h1" style="display: flex; flex-direction: column; gap: 6px">
+<h2 id="h1" style="margin: 0 0 0 4px; font-size: 12px; font-weight: 600; color: #55555A">Proveedor de IA</h2>
+<div style="background: #FFFFFF; border: 1px solid #E6E4E1; border-radius: 10px">
+<div style="padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid #F0EEEB">
+<div role="group" aria-label="Proveedor" style="display: flex; padding: 2px; border-radius: 8px; background: #EEEDEB; align-self: flex-start">
+<button type="button" aria-pressed="{{pClaude}}" onClick="{{setClaude}}" style="{{bClaude}}">Claude</button>
+<button type="button" aria-pressed="{{pGemini}}" onClick="{{setGemini}}" style="{{bGemini}}">Gemini</button>
+<button type="button" aria-pressed="{{pLocal}}" onClick="{{setLocal}}" style="{{bLocal}}">Local (Ollama)</button>
+<button type="button" aria-pressed="{{pNinguno}}" onClick="{{setNinguno}}" style="{{bNinguno}}">Ninguno: solo transcribir</button>
+</div>
+<sc-if value="{{conKey}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; align-items: center; gap: 10px">
+<label for="k" style="width: 90px">API key</label>
+<input id="k" type="password" value="sk-ant-xxxxxxxxxxxxxxxx" style="flex: 1; height: 28px; padding: 0 10px; border: 1px solid #D8D6D2; border-radius: 7px; font: inherit">
+<button type="button" style="height: 28px; padding: 0 12px; border: 1px solid #D8D6D2; border-radius: 7px; background: #FFFFFF; font: inherit; font-size: 12px; cursor: pointer">Probar conexión</button>
+<span style="font-size: 12px; color: #1F7A46; font-weight: 600">Conectado</span>
+</div>
+<span style="font-size: 12px; color: #55555A">Se guarda en el Llavero de macOS, nunca en un archivo de texto.</span>
+</sc-if>
+<sc-if value="{{esLocal}}" hint-placeholder-val="{{ false }}">
+<span style="color: #3F3F44">Usa un modelo instalado en este equipo con Ollama. Sin costo y sin internet; los resúmenes son menos precisos.</span>
+</sc-if>
+<sc-if value="{{esNinguno}}" hint-placeholder-val="{{ false }}">
+<div style="padding: 10px 12px; border-radius: 8px; background: #F4F3F1; line-height: 1.55; color: #3F3F44"><strong style="color: #1D1D1F">La app sigue funcionando:</strong> transcribe, identifica al profesor, crea las notas de Obsidian con sus relaciones y busca en tus clases. Sin resúmenes, sin sugerencias en vivo, y el chat muestra fragmentos en vez de respuestas redactadas.</div>
+</sc-if>
+</div>
+<div style="display: flex; align-items: center; gap: 12px; padding: 10px 14px"><label for="r" style="flex: 1">Si falla, usar de respaldo</label><select id="r" style="height: 26px; border: 1px solid #D8D6D2; border-radius: 6px; background: #FFFFFF; font: inherit"><option>Gemini</option><option>Ninguno</option></select></div>
+</div>
+</section>
+<section aria-labelledby="h2" style="display: flex; flex-direction: column; gap: 6px">
+<h2 id="h2" style="margin: 0 0 0 4px; font-size: 12px; font-weight: 600; color: #55555A">Modelo por tarea</h2>
+<div style="background: #FFFFFF; border: 1px solid #E6E4E1; border-radius: 10px">
+<div style="display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid #F0EEEB"><label for="m1" style="flex: 1">Resumen y tareas al terminar la clase</label><select id="m1" style="height: 26px; border: 1px solid #D8D6D2; border-radius: 6px; background: #FFFFFF; font: inherit"><option>Económico · Claude Haiku 5.5</option><option>Estándar · Claude Sonnet 5.5</option></select></div>
+<div style="display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid #F0EEEB"><label for="m2" style="flex: 1">Chat</label><select id="m2" style="height: 26px; border: 1px solid #D8D6D2; border-radius: 6px; background: #FFFFFF; font: inherit"><option>Estándar · Claude Sonnet 5.5</option><option>Máximo · Claude Opus 5.5</option></select></div>
+<div style="display: flex; align-items: center; gap: 12px; padding: 10px 14px"><label for="m3" style="flex: 1">Procesar clases sin resumen</label><span style="font-size: 12px; color: #55555A">3 pendientes · por lotes, más barato</span><button type="button" style="height: 26px; padding: 0 10px; border: 1px solid #D8D6D2; border-radius: 6px; background: #FFFFFF; font: inherit; font-size: 12px; cursor: pointer" id="m3">Procesar ahora</button></div>
+</div>
+</section>
+<section aria-labelledby="h3" style="display: flex; flex-direction: column; gap: 6px">
+<h2 id="h3" style="margin: 0 0 0 4px; font-size: 12px; font-weight: 600; color: #55555A">Sugerencias durante la clase</h2>
+<div style="background: #FFFFFF; border: 1px solid #E6E4E1; border-radius: 10px">
+<div style="display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid #F0EEEB"><span style="flex: 1">Mostrar sugerencias mientras grabo</span><button type="button" role="switch" aria-checked="{{sug}}" aria-label="Mostrar sugerencias mientras grabo" onClick="{{toggleSug}}" style="{{swStyle}}"><span style="width: 18px; height: 18px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 1px 2px rgba(0,0,0,0.25)"></span></button></div>
+<div style="display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid #F0EEEB"><label for="s1" style="flex: 1">Revisar cada</label><select id="s1" style="height: 26px; border: 1px solid #D8D6D2; border-radius: 6px; background: #FFFFFF; font: inherit"><option>10 minutos</option><option>5 minutos</option><option>20 minutos</option></select></div>
+<div style="display: flex; align-items: center; gap: 12px; padding: 10px 14px"><label for="s2" style="flex: 1">Máximo de consultas por clase</label><input id="s2" type="number" value="12" style="width: 60px; height: 26px; padding: 0 8px; border: 1px solid #D8D6D2; border-radius: 6px; font: inherit"></div>
+</div>
+</section>
+<section aria-labelledby="h4" style="display: flex; flex-direction: column; gap: 6px">
+<h2 id="h4" style="margin: 0 0 0 4px; font-size: 12px; font-weight: 600; color: #55555A">Gasto</h2>
+<div style="background: #FFFFFF; border: 1px solid #E6E4E1; border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; align-items: center; gap: 12px"><label for="g" style="flex: 1">Límite mensual</label><input id="g" type="text" value="US$ 5,00" style="width: 90px; height: 26px; padding: 0 8px; border: 1px solid #D8D6D2; border-radius: 6px; font: inherit; text-align: right"></div>
+<span role="img" aria-label="Usado 22 por ciento" style="height: 6px; border-radius: 3px; background: #EEEDEB; display: flex; overflow: hidden"><span style="width: 22%; background: #0A6CDB"></span></span>
+<span style="font-size: 12px; color: #55555A">Usado este mes: US$ 1,12. Al llegar al límite la app pasa a modo local, sin dejar de transcribir.</span>
+</div>
+</section>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":880,"height":860}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { p: 'claude', sug: true };
+  }
+  renderVals() {
+    const { p, sug } = this.state;
+    const seg = 'height: 26px; padding: 0 12px; border: 0; border-radius: 6px; font: inherit; font-size: 12px; cursor: pointer;';
+    const on = seg + ' background: #FFFFFF; color: #1D1D1F; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,0.15);';
+    const off = seg + ' background: transparent; color: #3F3F44;';
+    const b = (k) => (p === k ? on : off);
+    const set = (k) => () => this.setState({ p: k });
+    return {
+      pClaude: p === 'claude', pGemini: p === 'gemini', pLocal: p === 'local', pNinguno: p === 'ninguno',
+      bClaude: b('claude'), bGemini: b('gemini'), bLocal: b('local'), bNinguno: b('ninguno'),
+      setClaude: set('claude'), setGemini: set('gemini'), setLocal: set('local'), setNinguno: set('ninguno'),
+      conKey: p === 'claude' || p === 'gemini',
+      esLocal: p === 'local',
+      esNinguno: p === 'ninguno',
+      sug: sug,
+      toggleSug: () => this.setState({ sug: !sug }),
+      swStyle: 'width: 38px; height: 22px; border-radius: 11px; border: 0; padding: 2px; cursor: pointer; display: flex; ' + (sug ? 'background: #1F9D55; justify-content: flex-end;' : 'background: #C9C7C3; justify-content: flex-start;')
+    };
+  }
+}
+</script>
+</body>
+</html>

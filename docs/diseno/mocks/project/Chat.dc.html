@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Chat</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#0A6CDB}a:hover{color:#0853A8}
+</style>
+</helmet>
+<div style="width: 1280px; height: 800px; display: flex; background: #FFFFFF; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif; color: #1D1D1F; font-size: 13px">
+<dc-import name="Sidebar" active="chat" platform="mac" hint-size="232px,800px"></dc-import>
+<nav aria-label="Conversaciones" style="width: 236px; flex-shrink: 0; border-right: 1px solid #ECEAE7; display: flex; flex-direction: column; padding: 14px 10px; gap: 2px; box-sizing: border-box">
+<button type="button" style="height: 32px; margin-bottom: 10px; border: 1px solid #D8D6D2; border-radius: 8px; background: #FFFFFF; font: inherit; color: #1D1D1F; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M6 1.5v9M1.5 6h9"></path></svg>Nueva conversación</button>
+<span style="font-size: 11px; font-weight: 600; color: #6E6E73; padding: 6px 8px">Hoy</span>
+<a href="#" style="padding: 8px; border-radius: 7px; background: #EEEDEB; color: #1D1D1F; text-decoration: none; font-weight: 600">Tareas y regla LIATE</a>
+<a href="#" style="padding: 8px; border-radius: 7px; color: #1D1D1F; text-decoration: none">Fechas del primer parcial</a>
+<span style="font-size: 11px; font-weight: 600; color: #6E6E73; padding: 12px 8px 6px">Semana pasada</span>
+<a href="#" style="padding: 8px; border-radius: 7px; color: #1D1D1F; text-decoration: none">Resumen de Física I</a>
+<a href="#" style="padding: 8px; border-radius: 7px; color: #1D1D1F; text-decoration: none">¿Qué es una lista doble?</a>
+</nav>
+<main style="flex: 1; min-width: 0; display: flex; flex-direction: column">
+<header style="height: 52px; flex-shrink: 0; display: flex; align-items: center; gap: 10px; padding: 0 20px; border-bottom: 1px solid #ECEAE7">
+<h1 style="margin: 0; font-size: 15px; font-weight: 700; flex: 1">Tareas y regla LIATE</h1>
+<sc-if value="{{local}}" hint-placeholder-val="{{ false }}"><span style="height: 24px; padding: 0 10px; border-radius: 12px; background: #EEEDEB; color: #3F3F44; font-size: 12px; font-weight: 600; display: flex; align-items: center">Modo local · sin API key</span></sc-if>
+<sc-if value="{{ia}}" hint-placeholder-val="{{ true }}"><span style="height: 24px; padding: 0 10px; border-radius: 12px; background: #E6EFFB; color: #0A5BBE; font-size: 12px; font-weight: 600; display: flex; align-items: center">Claude Sonnet 5.5</span></sc-if>
+</header>
+<div style="flex: 1; min-height: 0; overflow: hidden; padding: 20px 40px; display: flex; flex-direction: column; gap: 16px">
+<div style="align-self: flex-end; max-width: 70%; padding: 9px 14px; border-radius: 16px 16px 4px 16px; background: #0A6CDB; color: #FFFFFF">¿Qué tareas tengo esta semana?</div>
+<div style="max-width: 78%; display: flex; flex-direction: column; gap: 6px">
+<div style="padding: 12px 14px; border-radius: 14px; background: #F4F3F1; line-height: 1.55">Tienes 2 tareas antes del domingo: <strong>Leer capítulo 7</strong> (Cálculo II, jue 15) y <strong>Laboratorio 3</strong> (Física I, vie 16).</div>
+<span style="font-size: 11.5px; color: #55555A">Respondido con tus notas y Google Tasks, sin IA · 0 tokens</span>
+</div>
+<div style="align-self: flex-end; max-width: 70%; padding: 9px 14px; border-radius: 16px 16px 4px 16px; background: #0A6CDB; color: #FFFFFF">¿Cómo explicó el profe la regla LIATE?</div>
+<sc-if value="{{ia}}" hint-placeholder-val="{{ true }}">
+<div style="max-width: 78%; display: flex; flex-direction: column; gap: 6px">
+<div style="padding: 12px 14px; border-radius: 14px; background: #F4F3F1; line-height: 1.55">La usó para decidir qué función tomar como <em>u</em>: se recorre el orden Logarítmicas, Inversas trigonométricas, Algebraicas, Trigonométricas y Exponenciales, y la que aparece primero es <em>u</em>. Aclaró que con dos trigonométricas a veces hay que aplicar partes dos veces y despejar.</div>
+<div style="display: flex; flex-wrap: wrap; gap: 6px">
+<a href="Clase.dc.html" style="height: 24px; padding: 0 10px; border-radius: 12px; border: 1px solid #D8D6D2; text-decoration: none; font-size: 12px; display: flex; align-items: center">Cálculo II · 12 oct · 39:40</a>
+<a href="Clase.dc.html" style="height: 24px; padding: 0 10px; border-radius: 12px; border: 1px solid #D8D6D2; text-decoration: none; font-size: 12px; display: flex; align-items: center">Cálculo II · 12 oct · 41:03</a>
+</div>
+<span style="font-size: 11.5px; color: #55555A">4 fragmentos enviados · ≈ 2,1 k tokens</span>
+</div>
+</sc-if>
+<sc-if value="{{local}}" hint-placeholder-val="{{ false }}">
+<div style="max-width: 78%; display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 12px; color: #55555A">Sin IA no puedo redactar una respuesta, pero estos fragmentos hablan de eso:</span>
+<a href="Clase.dc.html" style="padding: 10px 12px; border-radius: 10px; border: 1px solid #E0DEDA; color: #1D1D1F; text-decoration: none; line-height: 1.5"><span style="font-size: 11.5px; color: #0A6CDB">Cálculo II · 12 oct · 39:40 · Profesor</span><br>…usamos la regla LIATE: logarítmicas, inversas trigonométricas, algebraicas…</a>
+<a href="Clase.dc.html" style="padding: 10px 12px; border-radius: 10px; border: 1px solid #E0DEDA; color: #1D1D1F; text-decoration: none; line-height: 1.5"><span style="font-size: 11.5px; color: #0A6CDB">Cálculo II · 12 oct · 41:03 · Profesor</span><br>Ahí a veces hay que aplicar partes dos veces y despejar…</a>
+</div>
+</sc-if>
+<div style="align-self: flex-end; max-width: 70%; padding: 9px 14px; border-radius: 16px 16px 4px 16px; background: #0A6CDB; color: #FFFFFF">Recuérdame la hoja 4 un día antes</div>
+<div style="width: 420px; border: 1px solid #E0DEDA; border-radius: 12px; overflow: hidden">
+<div style="padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; border-bottom: 1px solid #EEECE9">
+<strong>Hoja de ejercicios 4, problemas 1–10</strong>
+<span style="color: #3F3F44">Entrega: lun 19 oct · Cálculo II · clase del 12 oct</span>
+</div>
+<div style="padding: 10px 14px; display: flex; align-items: center; gap: 8px; background: #EFF7F1; color: #1F5F3A; font-size: 12px"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m3.5 8.5 3 3 6-7"></path></svg>Ya está en Canvas con fecha 19/10. No se duplicará.</div>
+<fieldset style="border: 0; margin: 0; padding: 12px 14px 4px; display: flex; flex-direction: column; gap: 8px">
+<legend style="padding: 0; font-size: 12px; font-weight: 600; color: #55555A; margin-bottom: 6px">Agregar como</legend>
+<label style="display: flex; align-items: center; gap: 8px"><input type="checkbox" checked style="width: 15px; height: 15px; accent-color: #0A6CDB">Tarea en Google Tasks · lista “Tareas de clase”</label>
+<label style="display: flex; align-items: center; gap: 8px"><input type="checkbox" checked style="width: 15px; height: 15px; accent-color: #0A6CDB">Recordatorio en Calendar · dom 18 oct, 09:00</label>
+</fieldset>
+<div style="display: flex; gap: 8px; padding: 10px 14px 12px">
+<button type="button" style="height: 28px; padding: 0 12px; border: 0; border-radius: 7px; background: #0A6CDB; color: #FFFFFF; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer">Agregar</button>
+<button type="button" style="height: 28px; padding: 0 12px; border: 1px solid #D8D6D2; border-radius: 7px; background: #FFFFFF; font: inherit; font-size: 12px; color: #1D1D1F; cursor: pointer">Editar</button>
+</div>
+</div>
+</div>
+<form style="margin: 0 40px 20px; display: flex; align-items: center; gap: 10px; padding: 8px 8px 8px 12px; border: 1px solid #D8D6D2; border-radius: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.04)">
+<select aria-label="Buscar en" style="height: 28px; border: 0; border-radius: 7px; background: #F2F1EF; font: inherit; font-size: 12px; padding: 0 8px; color: #1D1D1F"><option>Todas las clases</option><option>Cálculo II</option><option>Esta semana</option></select>
+<input type="text" placeholder="Pregunta sobre tus clases…" aria-label="Pregunta" style="flex: 1; min-width: 0; border: 0; font: inherit; font-size: 14px; outline: none; color: #1D1D1F">
+<button type="button" aria-label="Enviar" style="width: 32px; height: 32px; border-radius: 50%; border: 0; background: #0A6CDB; color: #FFFFFF; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5"></path></svg></button>
+</form>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"sinApiKey":{"editor":"boolean","default":false},"$preview":{"width":1280,"height":800}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const local = this.props.sinApiKey ?? false;
+    return { local: local, ia: !local };
+  }
+}
+</script>
+</body>
+</html>

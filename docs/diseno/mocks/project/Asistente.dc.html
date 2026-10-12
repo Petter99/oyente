@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Asistente de primera vez</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#0A6CDB}a:hover{color:#0853A8}
+</style>
+</helmet>
+<div style="width: 960px; height: 640px; display: flex; background: #FFFFFF; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif; color: #1D1D1F; font-size: 13px">
+<aside style="width: 260px; flex-shrink: 0; box-sizing: border-box; background: #F2F1EF; border-right: 1px solid #E3E1DE; padding: 14px 18px 20px; display: flex; flex-direction: column; gap: 4px">
+<div style="display: flex; gap: 8px; padding: 2px 0 26px" aria-hidden="true">
+<span style="width: 12px; height: 12px; border-radius: 50%; background: #FF5F57"></span>
+<span style="width: 12px; height: 12px; border-radius: 50%; background: #FEBC2E"></span>
+<span style="width: 12px; height: 12px; border-radius: 50%; background: #28C840"></span>
+</div>
+<strong style="font-size: 17px; margin-bottom: 14px">Bienvenido a {{nombre}}</strong>
+<ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px">
+<li style="display: flex; align-items: center; gap: 10px; height: 32px; color: #3F3F44"><span style="width: 20px; height: 20px; border-radius: 50%; background: #1F9D55; color: #FFFFFF; font-size: 11px; display: flex; align-items: center; justify-content: center">✓</span>Carpeta de clases</li>
+<li style="display: flex; align-items: center; gap: 10px; height: 32px; color: #3F3F44"><span style="width: 20px; height: 20px; border-radius: 50%; background: #1F9D55; color: #FFFFFF; font-size: 11px; display: flex; align-items: center; justify-content: center">✓</span>Cursos</li>
+<li aria-current="step" style="display: flex; align-items: center; gap: 10px; height: 32px; font-weight: 700; padding: 0 8px; margin: 0 -8px; border-radius: 7px; background: #DEDCD8"><span style="width: 20px; height: 20px; border-radius: 50%; background: #0A6CDB; color: #FFFFFF; font-size: 11px; display: flex; align-items: center; justify-content: center">3</span>Inteligencia artificial</li>
+<li style="display: flex; align-items: center; gap: 10px; height: 32px; color: #55555A"><span style="width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid #B9B7B3; box-sizing: border-box; font-size: 11px; display: flex; align-items: center; justify-content: center">4</span>Conectar con Google (opcional)</li>
+<li style="display: flex; align-items: center; gap: 10px; height: 32px; color: #55555A"><span style="width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid #B9B7B3; box-sizing: border-box; font-size: 11px; display: flex; align-items: center; justify-content: center">5</span>Audio y permisos</li>
+<li style="display: flex; align-items: center; gap: 10px; height: 32px; color: #55555A"><span style="width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid #B9B7B3; box-sizing: border-box; font-size: 11px; display: flex; align-items: center; justify-content: center">6</span>Obsidian</li>
+</ol>
+<div style="flex: 1"></div>
+<div style="font-size: 12px; color: #55555A; line-height: 1.5">Descargando modelo de voz… 64 %<span role="img" aria-label="64 por ciento" style="display: flex; height: 4px; border-radius: 2px; background: #DEDCD8; margin-top: 6px; overflow: hidden"><span style="width: 64%; background: #0A6CDB"></span></span></div>
+</aside>
+<main style="flex: 1; min-width: 0; padding: 48px 48px 28px; display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<h1 style="margin: 0; font-size: 24px; font-weight: 700">¿Quieres usar inteligencia artificial?</h1>
+<p style="margin: 0; color: #3F3F44; line-height: 1.5">La transcripción siempre se hace en tu equipo. La IA solo agrega resúmenes, tareas mejor detectadas, sugerencias en vivo y un chat que redacta respuestas. Puedes cambiarlo cuando quieras.</p>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+<button type="button" aria-pressed="{{pClaude}}" onClick="{{setClaude}}" style="{{cClaude}}"><strong>Claude</strong><span style="font-size: 12px; color: #3F3F44">Recomendado. Necesitas una API key de Anthropic.</span></button>
+<button type="button" aria-pressed="{{pGemini}}" onClick="{{setGemini}}" style="{{cGemini}}"><strong>Gemini</strong><span style="font-size: 12px; color: #3F3F44">Necesitas una API key de Google AI Studio.</span></button>
+<button type="button" aria-pressed="{{pLocal}}" onClick="{{setLocal}}" style="{{cLocal}}"><strong>En mi equipo (Ollama)</strong><span style="font-size: 12px; color: #3F3F44">Gratis y sin internet. Requiere un equipo potente.</span></button>
+<button type="button" aria-pressed="{{pNinguno}}" onClick="{{setNinguno}}" style="{{cNinguno}}"><strong>No, solo transcribir</strong><span style="font-size: 12px; color: #3F3F44">Todo funciona igual, sin resúmenes ni sugerencias.</span></button>
+</div>
+<sc-if value="{{conKey}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; align-items: center; gap: 10px">
+<label for="ak" style="font-weight: 600">API key</label>
+<input id="ak" type="password" placeholder="Pega aquí tu API key" style="flex: 1; height: 32px; padding: 0 10px; border: 1px solid #D8D6D2; border-radius: 8px; font: inherit">
+<button type="button" style="height: 32px; padding: 0 12px; border: 1px solid #D8D6D2; border-radius: 8px; background: #FFFFFF; font: inherit; cursor: pointer">Probar</button>
+</div>
+<a href="#" style="font-size: 12px; text-decoration: none">¿Cómo consigo una API key? (guía con capturas)</a>
+</sc-if>
+<div style="flex: 1"></div>
+<div style="display: flex; align-items: center; gap: 10px">
+<button type="button" style="height: 32px; padding: 0 14px; border: 1px solid #D8D6D2; border-radius: 8px; background: #FFFFFF; font: inherit; cursor: pointer">Atrás</button>
+<span style="flex: 1"></span>
+<button type="button" style="height: 32px; padding: 0 14px; border: 0; background: transparent; font: inherit; color: #3F3F44; cursor: pointer">Omitir</button>
+<a href="Main.dc.html" style="height: 32px; padding: 0 18px; border-radius: 8px; background: #0A6CDB; color: #FFFFFF; text-decoration: none; display: flex; align-items: center; font-weight: 600">Continuar</a>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"nombre":{"editor":"text","default":"Oyente","section":"Marca"},"$preview":{"width":960,"height":640}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { p: 'claude' };
+  }
+  renderVals() {
+    const p = this.state.p;
+    const card = 'display: flex; flex-direction: column; gap: 4px; padding: 16px; border-radius: 12px; font: inherit; font-size: 14px; text-align: left; color: #1D1D1F; cursor: pointer; min-height: 80px;';
+    const on = card + ' border: 2px solid #0A6CDB; background: #F4F8FE; margin: 0;';
+    const off = card + ' border: 1px solid #E0DEDA; background: #FFFFFF; margin: 1px;';
+    const c = (k) => (p === k ? on : off);
+    const set = (k) => () => this.setState({ p: k });
+    return {
+      nombre: this.props.nombre ?? 'Oyente',
+      pClaude: p === 'claude', pGemini: p === 'gemini', pLocal: p === 'local', pNinguno: p === 'ninguno',
+      cClaude: c('claude'), cGemini: c('gemini'), cLocal: c('local'), cNinguno: c('ninguno'),
+      setClaude: set('claude'), setGemini: set('gemini'), setLocal: set('local'), setNinguno: set('ninguno'),
+      conKey: p === 'claude' || p === 'gemini'
+    };
+  }
+}
+</script>
+</body>
+</html>

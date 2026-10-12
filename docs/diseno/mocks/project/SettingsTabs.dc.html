@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Pestañas de Configuración</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 880px; height: 84px; box-sizing: border-box; background: #F2F1EF; border-bottom: 1px solid #E3E1DE; display: flex; flex-direction: column; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif; color: #1D1D1F; font-size: 11px">
+<div style="height: 26px; display: flex; align-items: center; padding: 0 12px; position: relative">
+<div style="display: flex; gap: 8px" aria-hidden="true">
+<span style="width: 12px; height: 12px; border-radius: 50%; background: #FF5F57"></span>
+<span style="width: 12px; height: 12px; border-radius: 50%; background: #FEBC2E"></span>
+<span style="width: 12px; height: 12px; border-radius: 50%; background: #28C840"></span>
+</div>
+<span style="position: absolute; left: 0; right: 0; text-align: center; font-size: 13px; font-weight: 600">{{titulo}}</span>
+</div>
+<nav aria-label="Secciones de configuración" style="flex: 1; display: flex; justify-content: center; gap: 2px; align-items: center">
+<a href="AjustesAudio.dc.html" style="{{sGeneral}}"><svg width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="2.3"></circle><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M3.4 12.6l1.4-1.4M11.2 4.8l1.4-1.4"></path></svg>General</a>
+<a href="AjustesAudio.dc.html" style="{{sAudio}}"><svg width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 6h2.5L8.5 3v10L5 10H2.5z"></path><path d="M11 5.5a3.5 3.5 0 0 1 0 5"></path></svg>Audio</a>
+<a href="AjustesAudio.dc.html" style="{{sTrans}}"><svg width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" aria-hidden="true"><path d="M2 5v6M5 3v10M8 6v4M11 4v8M14 6v4"></path></svg>Transcripción</a>
+<a href="AjustesAudio.dc.html" style="{{sHabl}}"><svg width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><circle cx="6" cy="5.5" r="2.3"></circle><path d="M1.8 13.5a4.2 4.2 0 0 1 8.4 0"></path><path d="M11 3.5a2.2 2.2 0 0 1 0 4.2M12 9.5a3.8 3.8 0 0 1 2.3 4"></path></svg>Hablantes</a>
+<a href="AjustesIA.dc.html" style="{{sIA}}"><svg width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 3h11v7.5H7l-3 2.5v-2.5H2.5z"></path><path d="M5.5 6.8h5"></path></svg>IA</a>
+<a href="AjustesAudio.dc.html" style="{{sObs}}"><svg width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" aria-hidden="true"><path d="M8 1.5 13.5 5v6L8 14.5 2.5 11V5z"></path><path d="M8 1.5v13M2.5 5 8 8l5.5-3"></path></svg>Obsidian</a>
+<a href="AjustesGoogle.dc.html" style="{{sGoogle}}"><svg width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><rect x="2.5" y="3.5" width="11" height="10" rx="1.5"></rect><path d="M2.5 6.5h11M5.5 2v3M10.5 2v3"></path></svg>Google</a>
+<a href="AjustesUniversidad.dc.html" style="{{sUni}}"><svg width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 6 8 3l6.5 3L8 9z"></path><path d="M4 7.3v3.4c1 1 2.5 1.6 4 1.6s3-.6 4-1.6V7.3"></path></svg>Universidad</a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"active":{"editor":"enum","options":["general","audio","trans","habl","ia","obs","google","uni"],"default":"audio"},"$preview":{"width":880,"height":84}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const a = this.props.active ?? 'audio';
+    const base = 'display: flex; flex-direction: column; align-items: center; gap: 3px; width: 78px; height: 50px; justify-content: center; border-radius: 8px; text-decoration: none; color: #3F3F44;';
+    const on = base + ' background: #DEDCD8; color: #0A6CDB; font-weight: 600;';
+    const s = (k) => (a === k ? on : base);
+    const names = { general: 'General', audio: 'Audio', trans: 'Transcripción', habl: 'Hablantes', ia: 'IA', obs: 'Obsidian', google: 'Google', uni: 'Calendarios de la universidad' };
+    return {
+      titulo: names[a] || 'Configuración',
+      sGeneral: s('general'), sAudio: s('audio'), sTrans: s('trans'), sHabl: s('habl'),
+      sIA: s('ia'), sObs: s('obs'), sGoogle: s('google'), sUni: s('uni')
+    };
+  }
+}
+</script>
+</body>
+</html>

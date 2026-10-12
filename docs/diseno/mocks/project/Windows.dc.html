@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Inicio en Windows</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#005FB8}a:hover{color:#004A8F}
+</style>
+</helmet>
+<div style="width: 1280px; height: 832px; display: flex; flex-direction: column; background: #FFFFFF; overflow: hidden; font-family: 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif; color: #1B1B1B; font-size: 13px">
+<div style="height: 32px; flex-shrink: 0; display: flex; align-items: center; background: #F3F3F3; border-bottom: 1px solid #E5E5E5">
+<span style="display: flex; align-items: center; gap: 10px; padding: 0 14px; flex: 1; font-size: 12px"><span style="width: 14px; height: 14px; border-radius: 3px; background: #D92D3A"></span>{{nombre}}</span>
+<span aria-hidden="true" style="width: 46px; height: 32px; display: flex; align-items: center; justify-content: center"><svg width="10" height="10" viewBox="0 0 10 10" stroke="#1B1B1B" fill="none"><path d="M0 5h10"></path></svg></span>
+<span aria-hidden="true" style="width: 46px; height: 32px; display: flex; align-items: center; justify-content: center"><svg width="10" height="10" viewBox="0 0 10 10" stroke="#1B1B1B" fill="none"><rect x="0.5" y="0.5" width="9" height="9" rx="1"></rect></svg></span>
+<span aria-hidden="true" style="width: 46px; height: 32px; display: flex; align-items: center; justify-content: center"><svg width="10" height="10" viewBox="0 0 10 10" stroke="#1B1B1B" fill="none"><path d="M0 0l10 10M10 0 0 10"></path></svg></span>
+</div>
+<div style="flex: 1; min-height: 0; display: flex">
+<dc-import name="Sidebar" active="inicio" platform="win" hint-size="232px,800px"></dc-import>
+<main style="flex: 1; min-width: 0; display: flex; flex-direction: column; background: #FAFAFA">
+<header style="height: 56px; flex-shrink: 0; display: flex; align-items: center; gap: 16px; padding: 0 24px">
+<h1 style="margin: 0; font-size: 20px; font-weight: 600; flex: 1">Inicio</h1>
+<label style="display: flex; align-items: center; gap: 8px; width: 300px; height: 32px; padding: 0 10px; box-sizing: border-box; border-radius: 4px; background: #FFFFFF; border: 1px solid #E0E0E0; border-bottom: 1px solid #8A8A8A; color: #5F5F5F"><input type="search" placeholder="Buscar en tus clases" aria-label="Buscar en tus clases" style="flex: 1; min-width: 0; border: 0; background: transparent; font: inherit; outline: none"><span style="font-size: 11px">Ctrl+K</span></label>
+<a href="Fuente.dc.html" style="display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 16px; border-radius: 4px; background: #C42B1C; color: #FFFFFF; text-decoration: none; font-weight: 600"><span style="width: 8px; height: 8px; border-radius: 50%; background: #FFFFFF"></span>Grabar</a>
+</header>
+<div style="flex: 1; min-height: 0; padding: 4px 24px 24px; display: flex; flex-direction: column; gap: 16px">
+<section aria-label="Próxima clase" style="display: flex; align-items: center; gap: 20px; padding: 20px 22px; border: 1px solid #E5E5E5; border-radius: 8px; background: #FFFFFF">
+<div style="flex: 1; display: flex; flex-direction: column; gap: 4px">
+<span style="font-size: 12px; color: #5F5F5F">Próxima clase · hoy 18:00 · en 25 min</span>
+<span style="font-size: 20px; font-weight: 600">Cálculo II</span>
+<span style="color: #5F5F5F">Audio: Google Chrome + tu micrófono · <a href="Fuente.dc.html" style="text-decoration: none">Cambiar</a></span>
+</div>
+<a href="Fuente.dc.html" style="display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 24px; border-radius: 4px; background: #C42B1C; color: #FFFFFF; text-decoration: none; font-size: 14px; font-weight: 600"><span style="width: 10px; height: 10px; border-radius: 50%; background: #FFFFFF"></span>Grabar ahora</a>
+</section>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; flex: 1; min-height: 0">
+<section aria-labelledby="wt" style="border: 1px solid #E5E5E5; border-radius: 8px; background: #FFFFFF; padding: 16px 20px; display: flex; flex-direction: column; gap: 10px">
+<h2 id="wt" style="margin: 0; font-size: 14px; font-weight: 600">Tareas pendientes</h2>
+<label style="display: flex; align-items: center; gap: 10px"><input type="checkbox" style="width: 16px; height: 16px; accent-color: #005FB8"><span style="flex: 1">Hoja de ejercicios 4, problemas 1–10</span><span style="font-size: 12px; color: #5F5F5F">lun 19 oct</span></label>
+<label style="display: flex; align-items: center; gap: 10px"><input type="checkbox" style="width: 16px; height: 16px; accent-color: #005FB8"><span style="flex: 1">Leer capítulo 7</span><span style="font-size: 12px; color: #5F5F5F">jue 15 oct</span></label>
+<label style="display: flex; align-items: center; gap: 10px"><input type="checkbox" style="width: 16px; height: 16px; accent-color: #005FB8"><span style="flex: 1">Laboratorio 3: péndulo simple</span><span style="font-size: 12px; color: #5F5F5F">vie 16 oct</span></label>
+</section>
+<section aria-labelledby="wr" style="border: 1px solid #E5E5E5; border-radius: 8px; background: #FFFFFF; padding: 16px 20px; display: flex; flex-direction: column; gap: 10px">
+<h2 id="wr" style="margin: 0; font-size: 14px; font-weight: 600">Clases recientes</h2>
+<a href="Clase.dc.html" style="color: #1B1B1B; text-decoration: none">Sustitución trigonométrica <span style="color: #5F5F5F; font-size: 12px">· Cálculo II · mié 7 oct</span></a>
+<a href="Clase.dc.html" style="color: #1B1B1B; text-decoration: none">Trabajo y energía <span style="color: #5F5F5F; font-size: 12px">· Física I · jue 8 oct</span></a>
+<a href="Clase.dc.html" style="color: #1B1B1B; text-decoration: none">Listas enlazadas <span style="color: #5F5F5F; font-size: 12px">· Programación II · vie 9 oct</span></a>
+</section>
+</div>
+</div>
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"nombre":{"editor":"text","default":"Oyente","section":"Marca"},"$preview":{"width":1280,"height":832}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { nombre: this.props.nombre ?? 'Oyente' };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,190 @@
+{
+  "v": 3,
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-10-12T17:40:00Z"
+  },
+  "title": "Diseño de vistas",
+  "launch": {
+    "view": "canvas"
+  },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800,
+      "title": "Inicio",
+      "radius": 12,
+      "is_interactive": true
+    },
+    "Fuente.dc.html": {
+      "x": 1360,
+      "y": 0,
+      "w": 1280,
+      "h": 800,
+      "title": "Nueva grabación · elegir fuente de audio",
+      "radius": 12,
+      "is_interactive": true
+    },
+    "Grabando.dc.html": {
+      "x": 2720,
+      "y": 0,
+      "w": 1280,
+      "h": 800,
+      "title": "Grabando en vivo",
+      "radius": 12,
+      "is_interactive": true
+    },
+    "BarraMenu.dc.html": {
+      "x": 4080,
+      "y": 0,
+      "w": 360,
+      "h": 480,
+      "title": "Barra de menús (mientras graba)",
+      "radius": 12,
+      "is_interactive": true
+    },
+    "Clase.dc.html": {
+      "x": 0,
+      "y": 1180,
+      "w": 1280,
+      "h": 800,
+      "title": "Detalle de una clase",
+      "radius": 12,
+      "is_interactive": true
+    },
+    "Chat.dc.html": {
+      "x": 1360,
+      "y": 1180,
+      "w": 1280,
+      "h": 800,
+      "title": "Chat con tus clases",
+      "radius": 12,
+      "is_interactive": true
+    },
+    "AjustesAudio.dc.html": {
+      "x": 0,
+      "y": 2360,
+      "w": 880,
+      "h": 860,
+      "title": "Configuración · Audio",
+      "radius": 12,
+      "is_interactive": true
+    },
+    "AjustesIA.dc.html": {
+      "x": 960,
+      "y": 2360,
+      "w": 880,
+      "h": 860,
+      "title": "Configuración · IA",
+      "radius": 12,
+      "is_interactive": true
+    },
+    "Asistente.dc.html": {
+      "x": 0,
+      "y": 3600,
+      "w": 960,
+      "h": 640,
+      "title": "Asistente de primera vez (paso 3 de 6)",
+      "radius": 12,
+      "is_interactive": true
+    },
+    "Windows.dc.html": {
+      "x": 1040,
+      "y": 3600,
+      "w": 1280,
+      "h": 832,
+      "title": "Inicio en Windows 11",
+      "radius": 8,
+      "is_interactive": true
+    },
+    "Sidebar.dc.html": {
+      "x": 0,
+      "y": 4820,
+      "w": 232,
+      "h": 800,
+      "title": "Componente · barra lateral"
+    },
+    "SettingsTabs.dc.html": {
+      "x": 312,
+      "y": 4820,
+      "w": 880,
+      "h": 84,
+      "title": "Componente · pestañas de Configuración"
+    },
+    "AjustesGoogle.dc.html": {
+      "x": 1920,
+      "y": 2360,
+      "w": 880,
+      "h": 860,
+      "title": "Configuración · Google (Calendar + Tasks)",
+      "radius": 12,
+      "is_interactive": true
+    },
+    "AjustesUniversidad.dc.html": {
+      "x": 2880,
+      "y": 2360,
+      "w": 880,
+      "h": 860,
+      "title": "Configuración · Calendarios de la universidad",
+      "radius": 12,
+      "is_interactive": true
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "Fuente.dc.html",
+    "Grabando.dc.html",
+    "BarraMenu.dc.html",
+    "Clase.dc.html",
+    "Chat.dc.html",
+    "AjustesAudio.dc.html",
+    "AjustesIA.dc.html",
+    "AjustesGoogle.dc.html",
+    "AjustesUniversidad.dc.html",
+    "Asistente.dc.html",
+    "Windows.dc.html",
+    "Sidebar.dc.html",
+    "SettingsTabs.dc.html"
+  ],
+  "notes": {
+    "t1": {
+      "x": 0,
+      "y": -260,
+      "text": "1 · Grabar una clase",
+      "kind": "title1",
+      "maxW": 4440
+    },
+    "t2": {
+      "x": 0,
+      "y": 920,
+      "text": "2 · Después de la clase",
+      "kind": "title1",
+      "maxW": 2640
+    },
+    "t3": {
+      "x": 0,
+      "y": 2100,
+      "text": "3 · Configuración",
+      "kind": "title1",
+      "maxW": 3760
+    },
+    "t4": {
+      "x": 0,
+      "y": 3340,
+      "text": "4 · Primera vez y Windows",
+      "kind": "title1",
+      "maxW": 2320
+    },
+    "t5": {
+      "x": 0,
+      "y": 4560,
+      "text": "5 · Componentes compartidos",
+      "kind": "title1",
+      "maxW": 1192
+    }
+  },
+  "designSystems": []
+}
