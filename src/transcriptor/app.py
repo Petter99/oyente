@@ -10,6 +10,7 @@ import argparse
 import functools
 import logging
 import multiprocessing
+import os
 import secrets
 import socket
 import sys
@@ -222,7 +223,20 @@ def _theme(svc: object) -> None:
     ui.colors(primary="#0A6CDB" if PLATFORM == "mac" else "#005FB8", negative="#D92D3A")
 
 
+def ensure_std_streams() -> None:
+    """El ejecutable sin consola de Windows (PyInstaller) deja sys.stdout/sys.stderr en None.
+
+    La barra de progreso (tqdm) de la descarga de modelos de Hugging Face escribe en stderr y
+    falla con AttributeError, así que el modelo de voz nunca terminaba de descargarse.
+    """
+    for name in ("stdout", "stderr"):
+        if getattr(sys, name) is None:
+            setattr(sys, name, open(os.devnull, "w", encoding="utf-8"))  # noqa: SIM115
+    os.environ.setdefault("HF_HUB_DISABLE_PROGRESS_BARS", "1")
+
+
 def main(argv: list[str] | None = None) -> None:
+    ensure_std_streams()
     multiprocessing.freeze_support()
     parser = argparse.ArgumentParser(prog=branding().ejecutable)
     parser.add_argument(
