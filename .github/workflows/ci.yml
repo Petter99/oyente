@@ -1,6 +1,10 @@
-# Pruebas automáticas. Repositorio privado: los minutos son limitados y los de Windows y macOS
-# cuentan más, así que en cada PR solo se usa Windows (la plataforma de los usuarios).
-# macOS se prueba en el Mac de desarrollo (uv run pytest) y aquí solo al etiquetar versiones.
+# Pruebas automáticas. El job "changes" (Linux, barato) decide en qué plataforma correr según
+# los archivos tocados, porque en un repositorio privado macOS y Windows consumen más minutos:
+#   - Código compartido (src, tests, dependencias, este flujo) -> Windows y macOS.
+#   - Solo archivos de Windows (platform_windows.py, packaging/windows, build-windows.ps1) -> Windows.
+#   - Solo archivos de macOS (platform_macos.py, packaging/macos, build-mac.sh) -> macOS.
+#   - Solo documentación u otros archivos -> ninguno.
+# Ejecución manual (workflow_dispatch) corre ambas plataformas.
 name: CI
 
 on:
@@ -14,7 +18,64 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      windows: ${{ github.event_name == 'workflow_dispatch' || steps.filter.outputs.shared == 'true' || steps.filter.outputs.windows == 'true' }}
+      macos: ${{ github.event_name == 'workflow_dispatch' || steps.filter.outputs.shared == 'true' || steps.filter.outputs.macos == 'true' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            shared:
+              - 'src/**'
+              - '!src/transcriptor/audio/sources/platform_windows.py'
+              - '!src/transcriptor/audio/sources/platform_macos.py'
+              - 'tests/**'
+              - 'scripts/**'
+              - '!scripts/build-windows.ps1'
+              - '!scripts/build-mac.sh'
+              - 'packaging/app.spec'
+              - 'packaging/launcher.py'
+              - 'browser-extension/**'
+              - 'pyproject.toml'
+              - 'uv.lock'
+              - '.python-version'
+              - '.github/workflows/ci.yml'
+            windows:
+              - 'src/transcriptor/audio/sources/platform_windows.py'
+              - 'packaging/windows/**'
+              - 'scripts/build-windows.ps1'
+            macos:
+              - 'src/transcriptor/audio/sources/platform_macos.py'
+              - 'packaging/macos/**'
+              - 'scripts/build-mac.sh'
+
+  # Independiente de la plataforma: se ejecuta siempre y en Linux (más barato).
+  secretos:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Gitleaks
+        # Se descarga el binario directamente (misma versión que .pre-commit-config.yaml) para
+        # no depender de gitleaks-action, que exige licencia en repositorios de organización.
+        run: |
+          version=8.21.2
+          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${version}/gitleaks_${version}_linux_x64.tar.gz" | tar -xz gitleaks
+          ./gitleaks detect --source . --redact --no-banner
+
   windows:
+    needs: changes
+    if: ${{ needs.changes.outputs.windows == 'true' }}
     runs-on: windows-latest
     timeout-minutes: 30
     steps:
@@ -32,13 +93,38 @@ jobs:
         run: uv run pytest -q --cov=transcriptor --cov-report=term
       - name: Licencias (lista para vender)
         run: uv run python scripts/check_licenses.py
-      - name: Secretos
-        # gitleaks-action@v2 siempre descarga el .tar.gz, pero las releases de Windows son
-        # .zip -> 404 en runners windows-latest (gitleaks/gitleaks-action#122, sin resolver).
-        # Se descarga y ejecuta el binario directamente (misma versión que .pre-commit-config.yaml).
-        shell: pwsh
+
+  macos:
+    needs: changes
+    if: ${{ needs.changes.outputs.macos == 'true' }}
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: Dependencias
+        run: uv sync --frozen
+      - name: Lint
+        run: uv run ruff check src tests scripts
+      - name: Tipos
+        run: uv run mypy
+      - name: Pruebas (rápidas, sin red ni hardware)
+        run: uv run pytest -q --cov=transcriptor --cov-report=term
+      - name: Licencias (lista para vender)
+        run: uv run python scripts/check_licenses.py
+
+  # Check único para exigir en la protección de rama: pasa si los jobs que corrieron tuvieron
+  # éxito y los omitidos (sin cambios relevantes) no cuentan como fallo.
+  ci-ok:
+    if: ${{ always() }}
+    needs: [changes, secretos, windows, macos]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verificar resultados
         run: |
-          $version = "8.21.2"
-          Invoke-WebRequest -Uri "https://github.com/gitleaks/gitleaks/releases/download/v$version/gitleaks_${version}_windows_x64.zip" -OutFile gitleaks.zip
-          Expand-Archive gitleaks.zip -DestinationPath gitleaks-bin
-          & ".\gitleaks-bin\gitleaks.exe" detect --source . --redact --no-banner
+          echo '${{ toJSON(needs) }}'
+          if [ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}" = "true" ]; then
+            exit 1
+          fi
