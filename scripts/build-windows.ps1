@@ -27,6 +27,7 @@ if (-not (Test-Path $Iscc)) { $Iscc = "$env:LOCALAPPDATA\Programs\Inno Setup 6\I
 if (-not (Test-Path $Iscc)) {
     winget install --id JRSoftware.InnoSetup -e --accept-source-agreements --accept-package-agreements
     $Iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+    if (-not (Test-Path $Iscc)) { $Iscc = "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe" }
 }
 
 Write-Host "== Dependencias"
