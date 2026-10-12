@@ -65,6 +65,7 @@ class LiveState:
     source_lost: str | None = None
     error: str | None = None
     queue: int = 0
+    stopping: bool = False
     version: int = 0  # cambia con cada novedad (para refrescar la UI)
 
     def bump(self) -> None:
@@ -165,6 +166,15 @@ class AppServices:
                 except Exception as exc:
                     log.exception("No se pudieron preparar los modelos de voz")
                     self.models_status = f"error: {exc}"
+                    return
+            # El modelo de la pasada final es grande (~3 GB): se baja ahora para que cerrar la
+            # primera clase no se quede minutos esperando una descarga.
+            ensure = getattr(pair.final, "ensure_downloaded", None)
+            if ensure is not None:
+                try:
+                    ensure()
+                except Exception:
+                    log.exception("No se pudo descargar el modelo de la pasada final")
 
         threading.Thread(target=run, name="modelos", daemon=True).start()
 
@@ -375,8 +385,9 @@ class AppServices:
         self, background: bool = True, final_transcriber: Transcriber | None = None
     ) -> str | None:
         live = self.live
-        if live.recorder is None or live.session is None:
-            return None
+        if live.recorder is None or live.session is None or live.stopping:
+            return None  # sin grabación, o ya se está deteniendo (doble clic en «Terminar»)
+        live.stopping = True
         segments = live.recorder.stop()
         audio = live.recorder.audio_files
         assistant = live.assistant
@@ -596,14 +607,25 @@ class AppServices:
         """Sesiones que quedaron abiertas por un cierre inesperado: se cierran con su audio."""
         recovered = []
         for s in self.store.interrupted():
+            if s.id in self.finalizing or (self.live.session and self.live.session.id == s.id):
+                continue  # ya se está cerrando o es la grabación en curso
             work = Path(s.work_dir) if s.work_dir else self.store.dir(s.id)
             audio = [p for p in (work / "clase.flac", work / "mic.flac") if p.exists()]
+            # Sin este estado la interfaz no sabe que se está procesando y se queda en «esperando».
+            state = FinalizeState(session_id=s.id, step="Recuperando la clase")
+            self.finalizing[s.id] = state
             try:
                 segments = self.store.load_segments(s.id, "live")
                 self.finalizer().run(s, self.course(s.course_id), segments, audio)
+                state.done = True
                 recovered.append(s.id)
-            except Exception:
+            except Exception as exc:
                 log.exception("No se pudo recuperar la sesión %s", s.id)
+                state.error = str(exc)
+                s.status = "error"
+                s.errors.append(str(exc))
+                self.store.save(s)
+            self.bus.emit("finalize_finished", session_id=s.id, error=state.error)
         return recovered
 
     def startup_maintenance(self) -> None:

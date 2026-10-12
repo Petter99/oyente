@@ -429,12 +429,15 @@ def class_page(svc: AppServices, session_id: str) -> None:
     )
     with frame(svc, "clases", session.title, subtitle, show_search=False, actions=actions):
         if processing:
-            progress = ui.label(f"Procesando: {st.step if st else 'esperando'}…").classes("muted")
+            progress = ui.label(f"Procesando: {st.step if st and st.step else 'empezando'}…").classes("muted")
             ui.linear_progress(show_value=False).props("indeterminate")
 
             def poll() -> None:
                 cur = svc.finalizing.get(session_id)
-                if cur and (cur.done or cur.error):
+                fresh = svc.store.get(session_id)
+                if (cur and (cur.done or cur.error)) or (
+                    fresh is not None and fresh.status in ("done", "error")
+                ):
                     ui.navigate.reload()
                 elif cur:
                     progress.set_text(f"Procesando: {cur.step or 'empezando'}…")
