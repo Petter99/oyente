@@ -1,4 +1,4 @@
-"""Asistente de primera vez (6 pasos; todos se pueden omitir salvo la carpeta)."""
+"""Asistente de primera vez (6 pasos; se pueden omitir todos salvo la carpeta y el último)."""
 
 from __future__ import annotations
 
@@ -56,19 +56,18 @@ def onboarding_page(svc: AppServices) -> None:
         with ui.element("main").classes("main"):
             body = ui.column().classes("content").style("max-width:760px")
 
+    def finish() -> None:
+        svc.cfg.ui.onboarding_done = True
+        svc.save_config()
+        ui.navigate.to("/")
+
     def go(step: int) -> None:
+        if step >= len(STEPS):  # nunca renderizar un paso que no existe (página en blanco)
+            finish()
+            return
         state["step"] = step
         progress.refresh()
         render()
-
-    def advance() -> None:
-        """Siguiente paso; tras el último (también al omitirlo) termina el asistente."""
-        if state["step"] + 1 >= len(STEPS):
-            svc.cfg.ui.onboarding_done = True
-            svc.save_config()
-            ui.navigate.to("/")
-        else:
-            go(state["step"] + 1)
 
     def nav(
         back: bool = True, skip: bool = True, next_label: str = "Continuar", on_next=None
@@ -79,15 +78,16 @@ def onboarding_page(svc: AppServices) -> None:
             else:
                 ui.element("div")
             with ui.row().classes("gap-2"):
-                if skip:
-                    ui.button("Omitir", on_click=advance).props("flat")
+                # en el último paso "Omitir" no tiene a dónde ir: solo queda "Terminar"
+                if skip and state["step"] + 1 < len(STEPS):
+                    ui.button("Omitir", on_click=lambda: go(state["step"] + 1)).props("flat")
 
                 async def nxt() -> None:
                     if on_next is not None:
                         ok = await on_next() if callable(on_next) else True
                         if ok is False:
                             return
-                    advance()
+                    go(state["step"] + 1)
 
                 ui.button(next_label, on_click=nxt).classes("btn-primary")
 
@@ -340,12 +340,23 @@ def onboarding_page(svc: AppServices) -> None:
             svc.cfg.obsidian.excluded_folders = list(chips.value or [])
             svc.save_config()
             result.set_text("Analizando tu bóveda…")
-            n = await run.io_bound(
-                sync_vault, svc.index, svc.vault_root, svc.cfg.obsidian.excluded_folders
-            )
-            ui.notify(f"{n} notas analizadas", type="positive")
+            try:
+                n = await run.io_bound(
+                    sync_vault, svc.index, svc.vault_root, svc.cfg.obsidian.excluded_folders
+                )
+                ui.notify(f"{n} notas analizadas", type="positive")
+            except Exception as exc:  # un fallo del análisis no debe dejar al usuario atascado
+                ui.notify(
+                    f"No se pudo analizar la bóveda ({exc}). Puedes reintentarlo en "
+                    "Configuración → Obsidian → Reconstruir relaciones.",
+                    type="warning",
+                    multi_line=True,
+                )
             return True
 
-        nav(next_label="Terminar", on_next=analyze)
+        ui.label(
+            "Si no quieres excluir ninguna carpeta, deja la lista vacía y pulsa Terminar."
+        ).classes("small muted")
+        nav(skip=False, next_label="Terminar", on_next=analyze)
 
     render()
