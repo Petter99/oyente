@@ -33,6 +33,12 @@ jobs:
       - name: Licencias (lista para vender)
         run: uv run python scripts/check_licenses.py
       - name: Secretos
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # gitleaks-action@v2 siempre descarga el .tar.gz, pero las releases de Windows son
+        # .zip -> 404 en runners windows-latest (gitleaks/gitleaks-action#122, sin resolver).
+        # Se descarga y ejecuta el binario directamente (misma versión que .pre-commit-config.yaml).
+        shell: pwsh
+        run: |
+          $version = "8.21.2"
+          Invoke-WebRequest -Uri "https://github.com/gitleaks/gitleaks/releases/download/v$version/gitleaks_${version}_windows_x64.zip" -OutFile gitleaks.zip
+          Expand-Archive gitleaks.zip -DestinationPath gitleaks-bin
+          & ".\gitleaks-bin\gitleaks.exe" detect --source . --redact --no-banner
