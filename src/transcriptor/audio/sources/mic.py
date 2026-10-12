@@ -39,8 +39,12 @@ class MicSource(AudioSource):
             info = sd.query_devices(self.device, "input")
             rate = int(info["default_samplerate"])
             self._stream = sd.InputStream(
-                device=self.device, channels=1, samplerate=rate, dtype="float32",
-                blocksize=int(rate * 0.1), callback=self._callback,
+                device=self.device,
+                channels=1,
+                samplerate=rate,
+                dtype="float32",
+                blocksize=int(rate * 0.1),
+                callback=self._callback,
                 finished_callback=self._finished,
             )
             self._stream.start()

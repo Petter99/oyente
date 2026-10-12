@@ -83,7 +83,9 @@ def _default_models() -> dict[str, ProviderModels]:
             economico="claude-haiku-5-5", estandar="claude-sonnet-5-5", maximo="claude-opus-5-5"
         ),
         "gemini": ProviderModels(
-            economico="gemini-flash-lite-latest", estandar="gemini-flash-latest", maximo="gemini-pro-latest"
+            economico="gemini-flash-lite-latest",
+            estandar="gemini-flash-latest",
+            maximo="gemini-pro-latest",
         ),
         "ollama": ProviderModels(economico="qwen3:8b", estandar="qwen3:8b", maximo="qwen3:14b"),
     }
@@ -163,4 +165,6 @@ class AppConfig(BaseModel):
         return (course.retention if course and course.retention else None) or self.audio.retention
 
     def format_for(self, course: Course | None) -> AudioFormat:
-        return (course.audio_format if course and course.audio_format else None) or self.audio.format
+        return (
+            course.audio_format if course and course.audio_format else None
+        ) or self.audio.format

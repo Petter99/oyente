@@ -14,9 +14,14 @@ from transcriptor.llm.schemas import ChunkInsights, LLMClassSummary, LLMKeyPoint
 class FakeLLM:
     """Proveedor de LLM falso: responde según el esquema pedido y cuenta llamadas."""
 
-    def __init__(self, responses: dict[type, Any] | None = None, name: str = "fake",
-                 fail: Exception | None = None, tokens: int = 1000,
-                 on_call: Callable[[LLMRequest], None] | None = None) -> None:
+    def __init__(
+        self,
+        responses: dict[type, Any] | None = None,
+        name: str = "fake",
+        fail: Exception | None = None,
+        tokens: int = 1000,
+        on_call: Callable[[LLMRequest], None] | None = None,
+    ) -> None:
         self.name = name
         self.responses = responses or {}
         self.fail = fail
@@ -61,9 +66,17 @@ def default_for(schema: type) -> BaseModel:
             resumen="Se explicó la integración por partes y la regla LIATE.",
             puntos_clave=[LLMKeyPoint(texto="LIATE ordena qué elegir como u", minuto="00:00:01")],
             temas=["Integración por partes", "Regla LIATE"],
-            tareas=[LLMTask(descripcion="Hoja de ejercicios 4", fecha_texto="el próximo jueves",
-                            tipo="tarea", minuto="00:00:01")],
+            tareas=[
+                LLMTask(
+                    descripcion="Hoja de ejercicios 4",
+                    fecha_texto="el próximo jueves",
+                    tipo="tarea",
+                    minuto="00:00:01",
+                )
+            ],
         )
     if schema is ChunkInsights:
-        return ChunkInsights(tareas=[], puntos_clave=[], preguntas_sugeridas=[], temas=["Integrales"])
+        return ChunkInsights(
+            tareas=[], puntos_clave=[], preguntas_sugeridas=[], temas=["Integrales"]
+        )
     raise LLMUnavailableError(f"sin respuesta para {schema}")

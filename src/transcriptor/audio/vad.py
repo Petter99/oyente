@@ -29,8 +29,12 @@ class SileroDetector:
         from faster_whisper.vad import VadOptions, get_speech_timestamps
 
         self._fn = get_speech_timestamps
-        self._opts = VadOptions(threshold=threshold, min_silence_duration_ms=min_silence_ms,
-                                speech_pad_ms=200, min_speech_duration_ms=200)
+        self._opts = VadOptions(
+            threshold=threshold,
+            min_silence_duration_ms=min_silence_ms,
+            speech_pad_ms=200,
+            min_speech_duration_ms=200,
+        )
 
     def speech_spans(self, samples: Samples) -> list[tuple[int, int]]:
         if samples.size < SAMPLE_RATE // 4:
@@ -42,7 +46,9 @@ class SileroDetector:
 class EnergyDetector:
     """Detector simple por energía con umbral adaptativo al ruido de fondo."""
 
-    def __init__(self, frame_ms: int = 30, margin_db: float = 12.0, floor_db: float = -50.0) -> None:
+    def __init__(
+        self, frame_ms: int = 30, margin_db: float = 12.0, floor_db: float = -50.0
+    ) -> None:
         self.frame = SAMPLE_RATE * frame_ms // 1000
         self.margin_db = margin_db
         self.floor_db = floor_db
@@ -94,8 +100,9 @@ class SegmenterConfig:
 class StreamingSegmenter:
     """Acumula audio de un canal y emite frases completas (Utterance) al detectar silencio."""
 
-    def __init__(self, channel: Channel, detector: SpeechDetector,
-                 config: SegmenterConfig | None = None) -> None:
+    def __init__(
+        self, channel: Channel, detector: SpeechDetector, config: SegmenterConfig | None = None
+    ) -> None:
         self.channel = channel
         self.detector = detector
         self.cfg = config or SegmenterConfig()
@@ -159,8 +166,11 @@ class StreamingSegmenter:
             if too_long:
                 # Frase demasiado larga: cortar en el hueco más grande antes del máximo.
                 limit = first_start + max_len
-                gaps = [(s2 - e1, e1) for (_, e1), (s2, _) in zip(spans, spans[1:], strict=False)
-                        if e1 <= limit]
+                gaps = [
+                    (s2 - e1, e1)
+                    for (_, e1), (s2, _) in zip(spans, spans[1:], strict=False)
+                    if e1 <= limit
+                ]
                 cut_end = max(gaps)[1] if gaps else limit
             if cut_end is None and final:
                 cut_end = spans[-1][1]

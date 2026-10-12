@@ -21,8 +21,9 @@ def create_transcribers(cfg: TranscriptionConfig) -> TranscriberPair:
     if plan.engine == "mlx":
         from transcriptor.asr.mlx_engine import MlxWhisperTranscriber
 
-        return TranscriberPair(MlxWhisperTranscriber(plan.live_model),
-                               MlxWhisperTranscriber(plan.final_model), plan)
+        return TranscriberPair(
+            MlxWhisperTranscriber(plan.live_model), MlxWhisperTranscriber(plan.final_model), plan
+        )
     from transcriptor.asr.faster_whisper_engine import FasterWhisperTranscriber
 
     live = FasterWhisperTranscriber(plan.live_model, plan.device, plan.compute_type, live=True)

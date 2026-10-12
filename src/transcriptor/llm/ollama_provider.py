@@ -23,7 +23,9 @@ from transcriptor.llm.schema import parse_json_output, strict_schema
 class OllamaProvider:
     name = "ollama"
 
-    def __init__(self, url: str, models: ProviderModels, client: httpx.Client | None = None) -> None:
+    def __init__(
+        self, url: str, models: ProviderModels, client: httpx.Client | None = None
+    ) -> None:
         self.url = url.rstrip("/")
         self.models = models
         self._client = client or httpx.Client(timeout=600.0)
@@ -57,7 +59,9 @@ class OllamaProvider:
         if r.status_code >= 400:
             raise LLMBadRequestError(f"Ollama: {r.text[:200]}")
         data = r.json()
-        usage = Usage(input_tokens=data.get("prompt_eval_count", 0), output_tokens=data.get("eval_count", 0))
+        usage = Usage(
+            input_tokens=data.get("prompt_eval_count", 0), output_tokens=data.get("eval_count", 0)
+        )
         return LLMResponse(data.get("message", {}).get("content", ""), self.name, model, usage)
 
     def generate(self, req: LLMRequest) -> LLMResponse:

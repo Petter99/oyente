@@ -79,7 +79,12 @@ class Usage:
 
     @property
     def total(self) -> int:
-        return self.input_tokens + self.output_tokens + self.cache_read_tokens + self.cache_write_tokens
+        return (
+            self.input_tokens
+            + self.output_tokens
+            + self.cache_read_tokens
+            + self.cache_write_tokens
+        )
 
 
 @dataclass
@@ -109,4 +114,6 @@ def estimate_tokens(text: str) -> int:
 
 
 def request_tokens(req: LLMRequest) -> int:
-    return estimate_tokens(req.system + "".join(m.content for m in req.messages)) + req.max_tokens // 4
+    return (
+        estimate_tokens(req.system + "".join(m.content for m in req.messages)) + req.max_tokens // 4
+    )

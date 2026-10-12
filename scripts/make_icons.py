@@ -17,7 +17,9 @@ RED = (217, 58, 43)
 RED_DARK = (176, 38, 28)
 
 
-def _waves(draw: ImageDraw.ImageDraw, cx: float, cy: float, unit: float, color: tuple, width: int) -> None:
+def _waves(
+    draw: ImageDraw.ImageDraw, cx: float, cy: float, unit: float, color: tuple, width: int
+) -> None:
     draw.ellipse([cx - unit * 0.9, cy - unit * 0.9, cx + unit * 0.9, cy + unit * 0.9], fill=color)
     for i, r in enumerate((2.2, 3.5)):
         box = [cx - unit * r, cy - unit * r, cx + unit * r, cy + unit * r]
@@ -40,25 +42,28 @@ def app_icon(size: int = 1024) -> Image.Image:
     ImageDraw.Draw(mask).rounded_rectangle([pad, pad, s - pad, s - pad], radius=radius, fill=255)
     img.putalpha(mask)
     _waves(d, s / 2, s / 2, s * 0.085, (255, 255, 255, 255), int(s * 0.045))
-    return img.resize((size, size), Image.LANCZOS)
+    return img.resize((size, size), Image.Resampling.LANCZOS)
 
 
 def tray_icon(size: int = 64, color: tuple = (0, 0, 0, 255)) -> Image.Image:
     s = size * 4
     img = Image.new("RGBA", (s, s), (0, 0, 0, 0))
     _waves(ImageDraw.Draw(img), s / 2, s / 2, s * 0.11, color, int(s * 0.07))
-    return img.resize((size, size), Image.LANCZOS)
+    return img.resize((size, size), Image.Resampling.LANCZOS)
 
 
 def extension_icon(size: int) -> Image.Image:
-    return app_icon(max(size, 16)).resize((size, size), Image.LANCZOS)
+    return app_icon(max(size, 16)).resize((size, size), Image.Resampling.LANCZOS)
 
 
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     icon = app_icon(1024)
     icon.save(OUT / "icon.png")
-    icon.save(OUT / "icon.ico", sizes=[(16, 16), (24, 24), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)])
+    icon.save(
+        OUT / "icon.ico",
+        sizes=[(16, 16), (24, 24), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)],
+    )
     try:
         icon.save(OUT / "icon.icns")
     except Exception as exc:  # Pillow sin soporte ICNS en este sistema

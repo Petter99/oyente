@@ -24,13 +24,17 @@ def build(dest: Path) -> Path:
     dest.mkdir(parents=True)
     for name in ("background.js", "offscreen.html", "offscreen.js"):
         shutil.copy(src / name, dest / name)
-    shutil.copy(ROOT / "src" / "transcriptor" / "capture_web" / "static" / "worklet.js", dest / "worklet.js")
+    shutil.copy(
+        ROOT / "src" / "transcriptor" / "capture_web" / "static" / "worklet.js", dest / "worklet.js"
+    )
     manifest = (src / "manifest.template.json").read_text(encoding="utf-8")
-    manifest = manifest.replace("{{NOMBRE}}", branding().nombre).replace("{{VERSION}}", EXTENSION_VERSION)
+    manifest = manifest.replace("{{NOMBRE}}", branding().nombre).replace(
+        "{{VERSION}}", EXTENSION_VERSION
+    )
     (dest / "manifest.json").write_text(manifest, encoding="utf-8")
     icons = dest / "icons"
     icons.mkdir()
-    from scripts.make_icons import extension_icon  # noqa: PLC0415
+    from scripts.make_icons import extension_icon
 
     for size in (16, 32, 48, 128):
         extension_icon(size).save(icons / f"{size}.png")

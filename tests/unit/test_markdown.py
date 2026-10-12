@@ -27,9 +27,12 @@ user_text = st.text(
 ).filter(lambda t: "%%" not in t and not t.startswith("---"))
 
 user_key = st.from_regex(r"[a-z][a-z_]{0,10}", fullmatch=True).filter(lambda k: k not in OWN_KEYS)
-user_value = st.one_of(st.integers(-1000, 1000), st.booleans(),
-                       st.text(alphabet=string.ascii_letters + " áñ", max_size=20),
-                       st.lists(st.text(alphabet=string.ascii_letters, min_size=1, max_size=8), max_size=3))
+user_value = st.one_of(
+    st.integers(-1000, 1000),
+    st.booleans(),
+    st.text(alphabet=string.ascii_letters + " áñ", max_size=20),
+    st.lists(st.text(alphabet=string.ascii_letters, min_size=1, max_size=8), max_size=3),
+)
 
 
 @settings(max_examples=150, suppress_health_check=[HealthCheck.too_slow])
@@ -37,9 +40,13 @@ user_value = st.one_of(st.integers(-1000, 1000), st.booleans(),
     body=user_text,
     props=st.dictionaries(user_key, user_value, max_size=5),
     updates=st.dictionaries(st.sampled_from(OWN_KEYS), user_value, min_size=1, max_size=5),
-    blocks=st.lists(st.tuples(st.sampled_from(["resumen", "tareas", "relacionado"]), user_text), max_size=4),
+    blocks=st.lists(
+        st.tuples(st.sampled_from(["resumen", "tareas", "relacionado"]), user_text), max_size=4
+    ),
 )
-def test_t6_3_user_text_is_never_modified(body: str, props: dict, updates: dict, blocks: list) -> None:
+def test_t6_3_user_text_is_never_modified(
+    body: str, props: dict, updates: dict, blocks: list
+) -> None:
     """Fuera de los bloques gestionados y de las propiedades propias, el archivo queda idéntico."""
     original = render_frontmatter(props) + body if props else body
     edited = set_properties(original, updates)
@@ -62,15 +69,20 @@ def test_t6_3_user_text_is_never_modified(body: str, props: dict, updates: dict,
 
     # 2) El cuerpo del usuario aparece intacto (los bloques solo se agregan al final).
     body_clean = strip_managed(body_after)
-    assert body_clean.startswith(body if not original.startswith("---") or props else body)
+    assert body_clean.startswith(body)
 
 
 def test_replace_existing_block_keeps_surroundings() -> None:
-    text = "# Clase\n\nMis notas antes.\n\n" + wrap_block("resumen", "viejo") + "\n\nMis notas después.\n"
+    text = (
+        "# Clase\n\nMis notas antes.\n\n"
+        + wrap_block("resumen", "viejo")
+        + "\n\nMis notas después.\n"
+    )
     new = replace_block(text, "resumen", "nuevo resumen")
     assert get_block(new, "resumen") == "nuevo resumen"
-    assert new.replace(wrap_block("resumen", "nuevo resumen"), "X") == \
-        text.replace(wrap_block("resumen", "viejo"), "X")
+    assert new.replace(wrap_block("resumen", "nuevo resumen"), "X") == text.replace(
+        wrap_block("resumen", "viejo"), "X"
+    )
 
 
 def test_set_properties_preserves_crlf_and_comments() -> None:
@@ -78,7 +90,11 @@ def test_set_properties_preserves_crlf_and_comments() -> None:
     out = set_properties(text, {"temas": ["c"], "siguiente": "[[x]]"})
     assert "# comentario del usuario\r\n" in out and "mio: 1\r\n" in out
     assert out.endswith("---\r\ncuerpo\r\n")
-    assert yaml.safe_load(split_frontmatter(out)[0] or "") == {"mio": 1, "temas": ["c"], "siguiente": "[[x]]"}
+    assert yaml.safe_load(split_frontmatter(out)[0] or "") == {
+        "mio": 1,
+        "temas": ["c"],
+        "siguiente": "[[x]]",
+    }
 
 
 def test_note_without_frontmatter_gets_one() -> None:

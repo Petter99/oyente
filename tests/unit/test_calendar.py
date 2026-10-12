@@ -11,7 +11,12 @@ import httpx
 import pytest
 from icalendar import Calendar
 
-from transcriptor.calendar.google_auth import SCOPE_APP_CALENDAR, SCOPE_READ_SCHEDULE, SCOPE_TASKS, scopes_for
+from transcriptor.calendar.google_auth import (
+    SCOPE_APP_CALENDAR,
+    SCOPE_READ_SCHEDULE,
+    SCOPE_TASKS,
+    scopes_for,
+)
 from transcriptor.calendar.ics import IcsFeed, export_tasks_ics, parse_ics
 from transcriptor.calendar.service import CalendarService, match_entry
 from transcriptor.config.models import Course, GoogleConfig
@@ -34,23 +39,34 @@ class FakeGoogle:
     """Imita la forma de googleapiclient: service.recurso().método(...).execute()."""
 
     def __init__(self) -> None:
-        self.calendars_db: dict[str, dict] = {"primary": {"id": "primary", "summary": "Personal"},
-                                              "canvas@import.calendar.google.com": {
-                                                  "id": "canvas@import.calendar.google.com", "summary": "Canvas"}}
-        self.events_db: dict[str, list[dict]] = {"primary": [], "canvas@import.calendar.google.com": []}
+        self.calendars_db: dict[str, dict] = {
+            "primary": {"id": "primary", "summary": "Personal"},
+            "canvas@import.calendar.google.com": {
+                "id": "canvas@import.calendar.google.com",
+                "summary": "Canvas",
+            },
+        }
+        self.events_db: dict[str, list[dict]] = {
+            "primary": [],
+            "canvas@import.calendar.google.com": [],
+        }
         self.tasklists_db: list[dict] = []
         self.tasks_db: dict[str, list[dict]] = {}
         self.inserts = 0
 
     # Calendar
-    def calendarList(self) -> Any:  # noqa: N802
-        return type("R", (), {"list": lambda s, **k: Call(lambda: {"items": list(self.calendars_db.values())})})()
+    def calendarList(self) -> Any:
+        return type(
+            "R",
+            (),
+            {"list": lambda s, **k: Call(lambda: {"items": list(self.calendars_db.values())})},
+        )()
 
     def calendars(self) -> Any:
         fake = self
 
         class R:
-            def get(self, calendarId: str) -> Call:  # noqa: N803
+            def get(self, calendarId: str) -> Call:
                 return Call(lambda: fake.calendars_db[calendarId])
 
             def insert(self, body: dict) -> Call:
@@ -59,10 +75,15 @@ class FakeGoogle:
                     fake.calendars_db[cid] = {"id": cid, **body}
                     fake.events_db[cid] = []
                     return fake.calendars_db[cid]
+
                 return Call(run)
 
-            def patch(self, calendarId: str, body: dict) -> Call:  # noqa: N803
-                return Call(lambda: fake.calendars_db[calendarId].update(body) or fake.calendars_db[calendarId])
+            def patch(self, calendarId: str, body: dict) -> Call:
+                return Call(
+                    lambda: (
+                        fake.calendars_db[calendarId].update(body) or fake.calendars_db[calendarId]
+                    )
+                )
 
         return R()
 
@@ -70,21 +91,29 @@ class FakeGoogle:
         fake = self
 
         class R:
-            def list(self, calendarId: str, privateExtendedProperty: str | None = None, **kw: Any) -> Call:  # noqa: N803
+            def list(
+                self, calendarId: str, privateExtendedProperty: str | None = None, **kw: Any
+            ) -> Call:
                 def run() -> dict:
                     items = fake.events_db[calendarId]
                     if privateExtendedProperty:
                         k, v = privateExtendedProperty.split("=")
-                        items = [e for e in items if e.get("extendedProperties", {}).get("private", {}).get(k) == v]
+                        items = [
+                            e
+                            for e in items
+                            if e.get("extendedProperties", {}).get("private", {}).get(k) == v
+                        ]
                     return {"items": items}
+
                 return Call(run)
 
-            def insert(self, calendarId: str, body: dict) -> Call:  # noqa: N803
+            def insert(self, calendarId: str, body: dict) -> Call:
                 def run() -> dict:
                     fake.inserts += 1
                     ev = {"id": f"ev{fake.inserts}", **body}
                     fake.events_db[calendarId].append(ev)
                     return ev
+
                 return Call(run)
 
         return R()
@@ -103,6 +132,7 @@ class FakeGoogle:
                     if not found:
                         raise KeyError(tasklist)
                     return found[0]
+
                 return Call(run)
 
             def insert(self, body: dict) -> Call:
@@ -111,6 +141,7 @@ class FakeGoogle:
                     fake.tasklists_db.append(tl)
                     fake.tasks_db[tl["id"]] = []
                     return tl
+
                 return Call(run)
 
         return R()
@@ -128,6 +159,7 @@ class FakeGoogle:
                     t = {"id": f"t{fake.inserts}", "status": "needsAction", **body}
                     fake.tasks_db[tasklist].append(t)
                     return t
+
                 return Call(run)
 
         return R()
@@ -143,16 +175,29 @@ class FakeAuth:
         return object()
 
 
-def service(google: FakeGoogle, scopes: list[str] | None = None, cfg: GoogleConfig | None = None,
-            ics: IcsFeed | None = None) -> CalendarService:
-    scopes = scopes if scopes is not None else SCOPE_READ_SCHEDULE + SCOPE_APP_CALENDAR + SCOPE_TASKS
-    return CalendarService(cfg or GoogleConfig(connected=True), FakeAuth(scopes), ics,  # type: ignore[arg-type]
-                           [Course(name="Cálculo II", calendar_keywords=["CAL-II"]), Course(name="Física I")],
-                           build_service=lambda api, version, credentials: google)
+def service(
+    google: FakeGoogle,
+    scopes: list[str] | None = None,
+    cfg: GoogleConfig | None = None,
+    ics: IcsFeed | None = None,
+) -> CalendarService:
+    scopes = (
+        scopes if scopes is not None else SCOPE_READ_SCHEDULE + SCOPE_APP_CALENDAR + SCOPE_TASKS
+    )
+    return CalendarService(
+        cfg or GoogleConfig(connected=True),
+        FakeAuth(scopes),
+        ics,  # type: ignore[arg-type]
+        [Course(name="Cálculo II", calendar_keywords=["CAL-II"]), Course(name="Física I")],
+        build_service=lambda api, version, credentials: google,
+    )
 
 
-TASK = TaskItem(description="Hoja de ejercicios 4, integrales por partes", due=date(2026, 10, 15),
-                due_text="el próximo jueves")
+TASK = TaskItem(
+    description="Hoja de ejercicios 4, integrales por partes",
+    due=date(2026, 10, 15),
+    due_text="el próximo jueves",
+)
 
 
 # ----------------------------------------------------------------------------- pruebas
@@ -216,18 +261,27 @@ def test_ics_timezones_and_all_day() -> None:
 
 def test_t12_4_cross_check_title_and_dates() -> None:
     entries = parse_ics((FIX / "canvas.ics").read_bytes())
-    match = match_entry(TaskItem(description="Hoja 4 de integrales", due=date(2026, 10, 15)), "Cálculo II", entries)
+    match = match_entry(
+        TaskItem(description="Hoja 4 de integrales", due=date(2026, 10, 15)), "Cálculo II", entries
+    )
     assert match is not None and match.title.startswith("Tarea 4")
     assert match.day == date(2026, 10, 16)  # «el profesor dijo 15, Canvas dice 16»
-    assert match_entry(TaskItem(description="Leer capítulo 9", due=date(2026, 10, 15)), "Cálculo II", entries) is None
+    assert (
+        match_entry(
+            TaskItem(description="Leer capítulo 9", due=date(2026, 10, 15)), "Cálculo II", entries
+        )
+        is None
+    )
 
 
 def test_cross_check_marks_tasks(tmp_path: Path) -> None:
     cache = tmp_path / "ics.cache"
     cache.write_bytes((FIX / "canvas.ics").read_bytes())
     svc = service(FakeGoogle(), ics=IcsFeed("https://x", cache))
-    tasks = [TaskItem(description="Hoja 4 de integrales", due=date(2026, 10, 15)),
-             TaskItem(description="Parcial", due=None, kind="examen")]
+    tasks = [
+        TaskItem(description="Hoja 4 de integrales", due=date(2026, 10, 15)),
+        TaskItem(description="Parcial", due=None, kind="examen"),
+    ]
     svc.cross_check(tasks, "Cálculo II")
     assert tasks[0].canvas_due == date(2026, 10, 16)
     assert tasks[1].due == date(2026, 10, 19)  # la fecha oficial completa la que faltaba
@@ -236,11 +290,14 @@ def test_cross_check_marks_tasks(tmp_path: Path) -> None:
 def test_upcoming_class_detection() -> None:
     google = FakeGoogle()
     now = datetime(2026, 10, 12, 17, 55).astimezone()
-    google.events_db["primary"].append({
-        "id": "c1", "summary": "Cálculo II (sección A)",
-        "start": {"dateTime": (now + timedelta(minutes=5)).isoformat()},
-        "end": {"dateTime": (now + timedelta(minutes=95)).isoformat()},
-    })
+    google.events_db["primary"].append(
+        {
+            "id": "c1",
+            "summary": "Cálculo II (sección A)",
+            "start": {"dateTime": (now + timedelta(minutes=5)).isoformat()},
+            "end": {"dateTime": (now + timedelta(minutes=95)).isoformat()},
+        }
+    )
     up = service(google).upcoming_classes(now=now)
     assert len(up) == 1 and up[0].course.name == "Cálculo II"
 
@@ -250,8 +307,9 @@ def test_university_calendar_imported_is_detected() -> None:
 
 
 def test_t12_7_export_ics_without_google(tmp_path: Path) -> None:
-    out = export_tasks_ics([(TASK, "Cálculo II"), (TaskItem(description="Leer"), "Física I")],
-                           tmp_path / "tareas.ics")
+    out = export_tasks_ics(
+        [(TASK, "Cálculo II"), (TaskItem(description="Leer"), "Física I")], tmp_path / "tareas.ics"
+    )
     cal = Calendar.from_ical(out.read_bytes())
     names = [c.name for c in cal.walk()]
     assert "VEVENT" in names and "VTODO" in names and "VALARM" in names
@@ -265,8 +323,11 @@ def test_t12_9_ics_url_never_logged(tmp_path: Path) -> None:
         calls.append(str(request.url))
         return httpx.Response(200, content=(FIX / "canvas.ics").read_bytes())
 
-    feed = IcsFeed(url.replace("https://", "webcal://"), tmp_path / "c.ics",
-                   client=httpx.Client(transport=httpx.MockTransport(handler)))
+    feed = IcsFeed(
+        url.replace("https://", "webcal://"),
+        tmp_path / "c.ics",
+        client=httpx.Client(transport=httpx.MockTransport(handler)),
+    )
     assert len(feed.refresh()) == 3
     assert calls[0].startswith("https://")
     assert "SECRETO123" not in redact(f"descargando {url}")
@@ -277,11 +338,20 @@ def test_google_token_roundtrip_in_keyring() -> None:
     from transcriptor.config.secrets import Secret, SecretStore
 
     secrets = SecretStore()
-    secrets.set(Secret.GOOGLE_TOKEN, json.dumps({
-        "token": "ya29.abc", "refresh_token": "1//refresh", "client_id": "id", "client_secret": "s",
-        "token_uri": "https://oauth2.googleapis.com/token", "scopes": SCOPE_TASKS,
-        "expiry": (datetime.utcnow() + timedelta(hours=1)).isoformat(),
-    }))
+    secrets.set(
+        Secret.GOOGLE_TOKEN,
+        json.dumps(
+            {
+                "token": "ya29.abc",
+                "refresh_token": "1//refresh",
+                "client_id": "id",
+                "client_secret": "s",
+                "token_uri": "https://oauth2.googleapis.com/token",
+                "scopes": SCOPE_TASKS,
+                "expiry": (datetime.utcnow() + timedelta(hours=1)).isoformat(),
+            }
+        ),
+    )
     auth = GoogleAuth(secrets)
     assert auth.credentials(SCOPE_TASKS) is not None
     assert auth.credentials(SCOPE_APP_CALENDAR) is None  # permiso no concedido todavía

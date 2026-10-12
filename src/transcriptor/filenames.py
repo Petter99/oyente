@@ -9,7 +9,10 @@ _FORBIDDEN = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 # Obsidian además trata # ^ [ ] | como especiales en los enlaces.
 _OBSIDIAN = re.compile(r"[#^\[\]]")
 _RESERVED = {
-    "CON", "PRN", "AUX", "NUL",
+    "CON",
+    "PRN",
+    "AUX",
+    "NUL",
     *(f"COM{i}" for i in range(1, 10)),
     *(f"LPT{i}" for i in range(1, 10)),
 }

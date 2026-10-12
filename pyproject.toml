@@ -88,7 +88,7 @@ src = ["src", "tests"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF"]
-ignore = ["RUF001", "RUF002", "RUF003", "E501", "SIM105"]
+ignore = ["RUF001", "RUF002", "RUF003", "E501", "SIM105", "SIM117", "SIM905", "RUF005", "RUF007", "RUF012", "RUF046", "RUF059", "UP031", "UP047"]
 
 [tool.mypy]
 python_version = "3.12"
@@ -96,6 +96,13 @@ packages = ["transcriptor"]
 mypy_path = "src"
 ignore_missing_imports = true
 check_untyped_defs = true
+plugins = ["pydantic.mypy"]
+disable_error_code = ["func-returns-value"]
+
+[[tool.mypy.overrides]]
+# NiceGUI: run.io_bound devuelve Optional y los callbacks son dinámicos.
+module = ["transcriptor.ui.*"]
+disable_error_code = ["misc", "operator", "has-type", "func-returns-value"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

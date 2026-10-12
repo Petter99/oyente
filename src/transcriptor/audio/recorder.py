@@ -20,8 +20,9 @@ class ChannelRecorder:
         self.path = path
         self.channel = channel
         path.parent.mkdir(parents=True, exist_ok=True)
-        self._file = sf.SoundFile(str(path), mode="w", samplerate=SAMPLE_RATE, channels=1,
-                                  format="FLAC", subtype="PCM_16")
+        self._file = sf.SoundFile(
+            str(path), mode="w", samplerate=SAMPLE_RATE, channels=1, format="FLAC", subtype="PCM_16"
+        )
         self._lock = threading.Lock()
         self.samples_written = 0
 

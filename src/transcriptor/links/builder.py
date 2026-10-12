@@ -43,12 +43,17 @@ class TopicRef:
 
     @property
     def link(self) -> str:
-        return f"[[{self.target}|{self.name}]]" if self.target.split("/")[-1] != self.name else f"[[{self.target}]]"
+        return (
+            f"[[{self.target}|{self.name}]]"
+            if self.target.split("/")[-1] != self.name
+            else f"[[{self.target}]]"
+        )
 
 
 class LinkBuilder:
-    def __init__(self, layout: VaultLayout, cfg: ObsidianConfig, index: SearchIndex,
-                 writer: NoteWriter) -> None:
+    def __init__(
+        self, layout: VaultLayout, cfg: ObsidianConfig, index: SearchIndex, writer: NoteWriter
+    ) -> None:
         self.layout = layout
         self.cfg = cfg
         self.index = index
@@ -57,8 +62,11 @@ class LinkBuilder:
     # ------------------------------------------------------------------ temas
     def _topic_candidates(self) -> list[NoteRow]:
         classes_prefix = self.layout.classes + "/"
-        return [n for n in self.index.notes()
-                if n.kind in ("tema", "usuario") and not n.path.startswith(classes_prefix)]
+        return [
+            n
+            for n in self.index.notes()
+            if n.kind in ("tema", "usuario") and not n.path.startswith(classes_prefix)
+        ]
 
     def resolve_topics(self, topics: list[str]) -> list[TopicRef]:
         if not self.cfg.link_topics:
@@ -69,7 +77,9 @@ class LinkBuilder:
             names.append((n.title, n))
             names.extend((a, n) for a in n.aliases if a)
         refs: list[TopicRef] = []
-        title_vecs = self.index.embedder.embed([nm for nm, _ in names]) if names else np.zeros((0, 1))
+        title_vecs = (
+            self.index.embedder.embed([nm for nm, _ in names]) if names else np.zeros((0, 1))
+        )
         for raw in topics:
             topic = raw.strip().strip(".#[]")
             if len(topic) < 3 or fold(topic) in STOPWORDS:
@@ -83,8 +93,9 @@ class LinkBuilder:
                 refs.append(ref)
         return refs
 
-    def _match_topic(self, topic: str, names: list[tuple[str, NoteRow]],
-                     vecs: np.ndarray) -> NoteRow | None:
+    def _match_topic(
+        self, topic: str, names: list[tuple[str, NoteRow]], vecs: np.ndarray
+    ) -> NoteRow | None:
         f = fold(topic)
         for name, note in names:
             if fold(name) == f:
@@ -111,16 +122,24 @@ class LinkBuilder:
     def previous_class(self, session: RecordingSession, own_path: str) -> NoteRow | None:
         if not self.cfg.link_prev_next:
             return None
-        before = [n for n in self.class_notes(session.course_name)
-                  if n.path != own_path and n.day and n.day <= session.day.isoformat()
-                  and n.session_id != session.id]
+        before = [
+            n
+            for n in self.class_notes(session.course_name)
+            if n.path != own_path
+            and n.day
+            and n.day <= session.day.isoformat()
+            and n.session_id != session.id
+        ]
         return before[-1] if before else None
 
     def next_class(self, session: RecordingSession, own_path: str) -> NoteRow | None:
         if not self.cfg.link_prev_next:
             return None
-        after = [n for n in self.class_notes(session.course_name)
-                 if n.path != own_path and n.day and n.day > session.day.isoformat()]
+        after = [
+            n
+            for n in self.class_notes(session.course_name)
+            if n.path != own_path and n.day and n.day > session.day.isoformat()
+        ]
         return after[0] if after else None
 
     def related(self, text: str, exclude: set[str]) -> list[tuple[NoteRow, float]]:
@@ -130,10 +149,13 @@ class LinkBuilder:
         if threshold is None:
             threshold = self.index.embedder.related_threshold
         vec = self.index.embedder.embed([text])[0]
-        return self.index.similar_notes(vec, kind="clase", exclude=exclude,
-                                        k=self.cfg.related_max, min_score=threshold)
+        return self.index.similar_notes(
+            vec, kind="clase", exclude=exclude, k=self.cfg.related_max, min_score=threshold
+        )
 
-    def mentioned_user_notes(self, transcript: str, exclude: set[str], limit: int = 5) -> list[NoteRow]:
+    def mentioned_user_notes(
+        self, transcript: str, exclude: set[str], limit: int = 5
+    ) -> list[NoteRow]:
         if not self.cfg.link_user_notes:
             return []
         folded = fold(transcript)
@@ -151,18 +173,26 @@ class LinkBuilder:
         return [n for _, n in found[:limit]]
 
     # ------------------------------------------------------------------ armado
-    def prepare(self, session: RecordingSession, segments: list[Segment],
-                note_path: Path) -> ClassNoteData:
+    def prepare(
+        self, session: RecordingSession, segments: list[Segment], note_path: Path
+    ) -> ClassNoteData:
         own = self.layout.rel(note_path) + ".md"
         topics = session.summary.topics if session.summary else []
         refs = self.resolve_topics(topics)
         prev = self.previous_class(session, own)
         nxt = self.next_class(session, own)
-        summary_text = " ".join(filter(None, [
-            session.summary.summary if session.summary else "",
-            " ".join(topics),
-            " ".join(kp.text for kp in session.summary.key_points) if session.summary else "",
-        ]))
+        summary_text = " ".join(
+            filter(
+                None,
+                [
+                    session.summary.summary if session.summary else "",
+                    " ".join(topics),
+                    " ".join(kp.text for kp in session.summary.key_points)
+                    if session.summary
+                    else "",
+                ],
+            )
+        )
         if len(summary_text) < 200:
             summary_text += " " + " ".join(s.text for s in segments)[:3000]
         exclude = {own} | ({prev.path} if prev else set())
@@ -200,13 +230,17 @@ class LinkBuilder:
         return f"[[{target}|{label}]]"
 
     @staticmethod
-    def navigation(prev_link: str | None, course_rel: str, course: str, next_link: str | None) -> str:
+    def navigation(
+        prev_link: str | None, course_rel: str, course: str, next_link: str | None
+    ) -> str:
         left = f"← {prev_link}" if prev_link else "← (primera clase)"
         right = f"{next_link} →" if next_link else "Clase siguiente →"
         return f"{left} · [[{course_rel}|{course}]] · {right}"
 
     # ------------------------------------------------------------------ después de escribir
-    def after_write(self, data: ClassNoteData, note_path: Path, topics: list[TopicRef] | None = None) -> None:
+    def after_write(
+        self, data: ClassNoteData, note_path: Path, topics: list[TopicRef] | None = None
+    ) -> None:
         session = data.session
         rel_md = note_path.relative_to(self.layout.root).as_posix()
         index_note(self.index, self.layout.root, note_path, force=True)
@@ -232,13 +266,21 @@ class LinkBuilder:
             path = self.layout.root / note.path
             if not path.exists():
                 continue
-            props = {"anterior": self._link(prev) if prev else "",
-                     "siguiente": self._link(nxt) if nxt else ""}
-            nav = self.navigation(self._link(prev, "Clase anterior") if prev else None, course_rel,
-                                  session.course_name, self._link(nxt, "Clase siguiente") if nxt else None)
+            props = {
+                "anterior": self._link(prev) if prev else "",
+                "siguiente": self._link(nxt) if nxt else "",
+            }
+            nav = self.navigation(
+                self._link(prev, "Clase anterior") if prev else None,
+                course_rel,
+                session.course_name,
+                self._link(nxt, "Clase siguiente") if nxt else None,
+            )
             self._edit_owned(path, props, {"navegacion": nav})
 
-    def _edit_owned(self, path: Path, props: dict, blocks: dict[str, str], attempts: int = 3) -> bool:
+    def _edit_owned(
+        self, path: Path, props: dict, blocks: dict[str, str], attempts: int = 3
+    ) -> bool:
         """Edita una nota propia solo en propiedades y bloques. Nunca toca notas del usuario."""
         for _ in range(attempts):
             try:
@@ -260,8 +302,9 @@ class LinkBuilder:
                 log.info("La nota %s cambió mientras se editaba; se reintenta", path.name)
         return False
 
-    def _create_or_update(self, path: Path, frontmatter: dict, heading: str,
-                          blocks: list[tuple[str, str, str]]) -> None:
+    def _create_or_update(
+        self, path: Path, frontmatter: dict, heading: str, blocks: list[tuple[str, str, str]]
+    ) -> None:
         """Crea una nota propia o actualiza sus bloques. blocks = (nombre, encabezado, contenido)."""
         if path.exists():
             text = path.read_text(encoding="utf-8")
@@ -279,10 +322,14 @@ class LinkBuilder:
     def _class_list(self, notes: list[NoteRow]) -> str:
         if not notes:
             return "_Todavía no hay clases._"
-        return "\n".join(f"- {self._link(n, f'{n.day} · {n.title.split(' ', 1)[-1]}')}"
-                         for n in sorted(notes, key=lambda n: n.day or "", reverse=True))
+        return "\n".join(
+            f"- {self._link(n, f'{n.day} · {n.title.split(" ", 1)[-1]}')}"
+            for n in sorted(notes, key=lambda n: n.day or "", reverse=True)
+        )
 
-    def update_course_note(self, course: str, teacher: str = "", glossary: list[str] | None = None) -> None:
+    def update_course_note(
+        self, course: str, teacher: str = "", glossary: list[str] | None = None
+    ) -> None:
         path = self.layout.course_note(course)
         folder = self.layout.rel(self.layout.course_dir(course))
         info = [f"**Profesor:** [[{teacher}]]" if teacher else "**Profesor:** —"]
@@ -291,25 +338,39 @@ class LinkBuilder:
         tasks_query = f"```tasks\nnot done\npath includes {folder}\nsort by due\n```"
         self._create_or_update(
             path,
-            {"tipo": "curso", "transcriptor_id": f"curso-{slug(course)}", "tags": ["curso", slug(course)]},
+            {
+                "tipo": "curso",
+                "transcriptor_id": f"curso-{slug(course)}",
+                "tags": ["curso", slug(course)],
+            },
             course,
-            [("info", "", "\n".join(info)),
-             ("clases", "## Clases", self._class_list(self.class_notes(course))),
-             ("tareas", "## Tareas pendientes", tasks_query)],
+            [
+                ("info", "", "\n".join(info)),
+                ("clases", "## Clases", self._class_list(self.class_notes(course))),
+                ("tareas", "## Tareas pendientes", tasks_query),
+            ],
         )
 
     def update_teacher_note(self, teacher: str) -> None:
         path = self.layout.teacher_note(teacher)
-        classes = [n for n in self.index.notes("clase")
-                   if self._teacher_of(n) == fold(teacher)]
+        classes = [n for n in self.index.notes("clase") if self._teacher_of(n) == fold(teacher)]
         courses = sorted({n.course for n in classes if n.course})
-        course_links = "\n".join(
-            f"- [[{self.layout.rel(self.layout.course_note(c))}|{c}]]" for c in courses) or "—"
+        course_links = (
+            "\n".join(f"- [[{self.layout.rel(self.layout.course_note(c))}|{c}]]" for c in courses)
+            or "—"
+        )
         self._create_or_update(
             path,
-            {"tipo": "profesor", "transcriptor_id": f"profesor-{slug(teacher)}", "tags": ["profesor"]},
+            {
+                "tipo": "profesor",
+                "transcriptor_id": f"profesor-{slug(teacher)}",
+                "tags": ["profesor"],
+            },
             teacher,
-            [("cursos", "## Cursos", course_links), ("clases", "## Clases", self._class_list(classes))],
+            [
+                ("cursos", "## Cursos", course_links),
+                ("clases", "## Clases", self._class_list(classes)),
+            ],
         )
 
     def _teacher_of(self, note: NoteRow) -> str:
@@ -336,7 +397,12 @@ class LinkBuilder:
                 classes.append(n)
         self._create_or_update(
             path,
-            {"tipo": "tema", "transcriptor_id": f"tema-{slug(ref.name)}", "aliases": [], "tags": ["tema"]},
+            {
+                "tipo": "tema",
+                "transcriptor_id": f"tema-{slug(ref.name)}",
+                "aliases": [],
+                "tags": ["tema"],
+            },
             ref.name,
             [("clases", "## Clases donde aparece", self._class_list(classes))],
         )
@@ -344,16 +410,20 @@ class LinkBuilder:
     def update_index_note(self) -> None:
         path = self.layout.index_note()
         courses = self.index.courses()
-        course_links = "\n".join(
-            f"- [[{self.layout.rel(self.layout.course_note(c))}|{c}]]" for c in courses) or "—"
+        course_links = (
+            "\n".join(f"- [[{self.layout.rel(self.layout.course_note(c))}|{c}]]" for c in courses)
+            or "—"
+        )
         recent = sorted(self.index.notes("clase"), key=lambda n: n.day or "", reverse=True)[:10]
         tasks_query = f"```tasks\nnot done\npath includes {self.layout.classes}\nsort by due\ngroup by filename\n```"
         self._create_or_update(
             path,
             {"tipo": "indice", "transcriptor_id": "indice", "tags": ["indice"]},
             f"Clases ({branding().nombre})",
-            [("cursos", "## Cursos", course_links),
-             ("recientes", "## Últimas clases", self._class_list(recent)),
-             ("tareas", "## Tareas pendientes", tasks_query),
-             ("actualizado", "", f"_Actualizado: {datetime.now():%Y-%m-%d %H:%M}_")],
+            [
+                ("cursos", "## Cursos", course_links),
+                ("recientes", "## Últimas clases", self._class_list(recent)),
+                ("tareas", "## Tareas pendientes", tasks_query),
+                ("actualizado", "", f"_Actualizado: {datetime.now():%Y-%m-%d %H:%M}_"),
+            ],
         )

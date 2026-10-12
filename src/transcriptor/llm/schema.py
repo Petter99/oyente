@@ -40,7 +40,7 @@ def parse_json_output(text: str, schema: type[T]) -> T:
     cleaned = text.strip()
     if cleaned.startswith("```"):
         cleaned = cleaned.strip("`")
-        cleaned = cleaned[cleaned.find("{"):]
+        cleaned = cleaned[cleaned.find("{") :]
     start, end = cleaned.find("{"), cleaned.rfind("}")
     if start == -1 or end == -1:
         raise LLMInvalidOutputError("La respuesta no contiene JSON")

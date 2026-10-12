@@ -7,7 +7,12 @@ import re
 from collections.abc import Iterator
 from pathlib import Path
 
-from transcriptor.notes.markdown import get_block, parse_frontmatter, split_frontmatter, strip_managed
+from transcriptor.notes.markdown import (
+    get_block,
+    parse_frontmatter,
+    split_frontmatter,
+    strip_managed,
+)
 from transcriptor.notes.writer import TRANSCRIPT_DIR
 from transcriptor.search.index import SearchIndex
 
@@ -15,7 +20,9 @@ log = logging.getLogger(__name__)
 
 OWN_KINDS = {"clase", "tema", "profesor", "curso", "indice"}
 SKIP_DIRS = {".obsidian", ".trash", ".git", TRANSCRIPT_DIR}
-TRANSCRIPT_LINE = re.compile(r"^\*\*\[(\d\d):(\d\d):(\d\d)\](?: ([^:*]+):)?\*\* (.*?)(?: \^[\w-]+)?$")
+TRANSCRIPT_LINE = re.compile(
+    r"^\*\*\[(\d\d):(\d\d):(\d\d)\](?: ([^:*]+):)?\*\* (.*?)(?: \^[\w-]+)?$"
+)
 LINK_ALIAS = re.compile(r"\[\[([^\]|]+)(?:\|([^\]]+))?\]\]")
 
 
@@ -43,7 +50,9 @@ def link_text(value: object) -> str | None:
     return m.group(2) or m.group(1).split("/")[-1]
 
 
-def _paragraph_chunks(body: str, size: int = 700) -> list[tuple[str, float | None, str | None, str]]:
+def _paragraph_chunks(
+    body: str, size: int = 700
+) -> list[tuple[str, float | None, str | None, str]]:
     chunks: list[tuple[str, float | None, str | None, str]] = []
     buf = ""
     for para in re.split(r"\n\s*\n", body):
@@ -116,17 +125,33 @@ def index_note(index: SearchIndex, root: Path, path: Path, force: bool = False) 
         summary, chunks = class_chunks(text)
         topics = [link_text(t) or "" for t in (fm.get("temas") or [])]
         summary_full = (summary + " " + " ".join(topics)).strip()
-        index.upsert_note(path=rel, title=title, kind=kind, owned=True, mtime=mtime,
-                          course=link_text(fm.get("curso")), day=str(fm.get("fecha") or "") or None,
-                          session_id=str(fm.get("transcriptor_id")), aliases=aliases,
-                          summary=summary_full, chunks=chunks)
+        index.upsert_note(
+            path=rel,
+            title=title,
+            kind=kind,
+            owned=True,
+            mtime=mtime,
+            course=link_text(fm.get("curso")),
+            day=str(fm.get("fecha") or "") or None,
+            session_id=str(fm.get("transcriptor_id")),
+            aliases=aliases,
+            summary=summary_full,
+            chunks=chunks,
+        )
     else:
         _, body = split_frontmatter(text)
         if owned:
             body = strip_managed(body)
-        index.upsert_note(path=rel, title=title, kind=kind, owned=owned, mtime=mtime,
-                          aliases=[str(a) for a in aliases], summary=body[:400],
-                          chunks=_paragraph_chunks(body))
+        index.upsert_note(
+            path=rel,
+            title=title,
+            kind=kind,
+            owned=owned,
+            mtime=mtime,
+            aliases=[str(a) for a in aliases],
+            summary=body[:400],
+            chunks=_paragraph_chunks(body),
+        )
 
 
 def sync_vault(index: SearchIndex, root: Path, excluded: list[str]) -> int:

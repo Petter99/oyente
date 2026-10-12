@@ -54,12 +54,16 @@ def parse_ics(data: bytes | str) -> list[CalendarEntry]:
         end = None
         if end_raw is not None and isinstance(end_raw.dt, datetime):
             end = end_raw.dt.astimezone() if end_raw.dt.tzinfo else end_raw.dt
-        entries.append(CalendarEntry(
-            uid=str(comp.get("UID", "")),
-            title=str(comp.get("SUMMARY", "")).strip(),
-            day=day, start=start, end=end,
-            description=str(comp.get("DESCRIPTION", ""))[:500],
-        ))
+        entries.append(
+            CalendarEntry(
+                uid=str(comp.get("UID", "")),
+                title=str(comp.get("SUMMARY", "")).strip(),
+                day=day,
+                start=start,
+                end=end,
+                description=str(comp.get("DESCRIPTION", ""))[:500],
+            )
+        )
     return entries
 
 
@@ -78,7 +82,9 @@ class IcsFeed:
             self.cache.parent.mkdir(parents=True, exist_ok=True)
             self.cache.write_bytes(r.content)
         except httpx.HTTPError:
-            log.warning("No se pudo actualizar el calendario de la universidad; se usa la copia local")
+            log.warning(
+                "No se pudo actualizar el calendario de la universidad; se usa la copia local"
+            )
         return self.entries()
 
     def entries(self) -> list[CalendarEntry]:

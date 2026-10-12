@@ -64,12 +64,15 @@ def test_live_trigger() -> None:
 
 
 def test_tfidf_topics() -> None:
-    text = ("Hoy vemos integración por partes. La integración por partes sirve con productos. "
-            "La regla LIATE ayuda. Con la regla LIATE elegimos u. Producto de funciones. "
-            "Producto de funciones otra vez con integración por partes.")
+    text = (
+        "Hoy vemos integración por partes. La integración por partes sirve con productos. "
+        "La regla LIATE ayuda. Con la regla LIATE elegimos u. Producto de funciones. "
+        "Producto de funciones otra vez con integración por partes."
+    )
     topics = tfidf_keywords(text)
-    assert topics[:3] == ["Integración por partes", "Regla LIATE", "Producto de funciones"] or \
-        set(topics[:3]) == {"Integración por partes", "Regla LIATE", "Producto de funciones"}
+    assert topics[:3] == ["Integración por partes", "Regla LIATE", "Producto de funciones"] or set(
+        topics[:3]
+    ) == {"Integración por partes", "Regla LIATE", "Producto de funciones"}
 
 
 def test_wer() -> None:
@@ -86,7 +89,12 @@ def test_fold_and_contains() -> None:
 
 def test_t10_6_hashing_embedder_similarity() -> None:
     emb = HashingEmbedder()
-    v = emb.embed(["integración por partes de logaritmos", "integrales por partes con logaritmos",
-                   "leyes de Newton y fuerzas"])
+    v = emb.embed(
+        [
+            "integración por partes de logaritmos",
+            "integrales por partes con logaritmos",
+            "leyes de Newton y fuerzas",
+        ]
+    )
     assert np.allclose(np.linalg.norm(v, axis=1), 1, atol=1e-5)
     assert v[0] @ v[1] > v[0] @ v[2] + 0.2

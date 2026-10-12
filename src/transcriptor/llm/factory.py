@@ -5,7 +5,12 @@ from __future__ import annotations
 from transcriptor.config.models import AIConfig, ProviderName
 from transcriptor.config.secrets import Secret, SecretStore
 from transcriptor.llm.base import LLMProvider
-from transcriptor.llm.composite import BudgetedProvider, FallbackProvider, NullLLMProvider, TokenLedger
+from transcriptor.llm.composite import (
+    BudgetedProvider,
+    FallbackProvider,
+    NullLLMProvider,
+    TokenLedger,
+)
 from transcriptor.paths import data_dir
 
 
@@ -25,7 +30,9 @@ def single_provider(name: ProviderName, cfg: AIConfig, secrets: SecretStore) -> 
     return NullLLMProvider()
 
 
-def build_provider(cfg: AIConfig, secrets: SecretStore, ledger: TokenLedger | None = None) -> BudgetedProvider:
+def build_provider(
+    cfg: AIConfig, secrets: SecretStore, ledger: TokenLedger | None = None
+) -> BudgetedProvider:
     chain: list[LLMProvider] = []
     for name in (cfg.provider, cfg.fallback_provider):
         if name != "none" and all(p.name != name for p in chain):

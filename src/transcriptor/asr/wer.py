@@ -9,7 +9,9 @@ import unicodedata
 def normalize(text: str, strip_accents: bool = False) -> list[str]:
     text = unicodedata.normalize("NFC", text.lower())
     if strip_accents:
-        text = "".join(c for c in unicodedata.normalize("NFKD", text) if not unicodedata.combining(c))
+        text = "".join(
+            c for c in unicodedata.normalize("NFKD", text) if not unicodedata.combining(c)
+        )
     text = re.sub(r"[^\w\s]", " ", text)
     return text.split()
 

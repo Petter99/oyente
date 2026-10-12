@@ -40,13 +40,15 @@ def list_audio_apps() -> list[RunningApp]:
             apps = list_shareable_apps()
         else:
             apps = _list_processes()
-    except Exception:
-        log.exception("No se pudieron listar las aplicaciones")
+    except Exception as exc:
+        log.warning("No se pudieron listar las aplicaciones: %s", exc)
         apps = _list_processes()
 
     def rank(app: RunningApp) -> tuple[int, int, str]:
         low = app.name.lower()
-        kind = 0 if any(b in low for b in BROWSERS) else 1 if any(c in low for c in CALL_APPS) else 2
+        kind = (
+            0 if any(b in low for b in BROWSERS) else 1 if any(c in low for c in CALL_APPS) else 2
+        )
         return (0 if app.playing else 1, kind, low)
 
     return sorted(apps, key=rank)

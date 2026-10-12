@@ -33,12 +33,24 @@ from transcriptor.session.models import TaskItem
 log = logging.getLogger(__name__)
 
 IMPORTED_SUFFIX = "@import.calendar.google.com"
-GENERIC = STOPWORDS | {"tarea", "tareas", "entrega", "hoja", "ejercicios", "trabajo", "assignment",
-                       "due", "curso", "semana"}
+GENERIC = STOPWORDS | {
+    "tarea",
+    "tareas",
+    "entrega",
+    "hoja",
+    "ejercicios",
+    "trabajo",
+    "assignment",
+    "due",
+    "curso",
+    "semana",
+}
 
 
 def task_key(course: str, task: TaskItem) -> str:
-    base = f"{fold(course)}|{fold(task.description)[:80]}|{task.due.isoformat() if task.due else ''}"
+    base = (
+        f"{fold(course)}|{fold(task.description)[:80]}|{task.due.isoformat() if task.due else ''}"
+    )
     return hashlib.sha1(base.encode()).hexdigest()[:16]
 
 
@@ -64,7 +76,9 @@ def match_entry(task: TaskItem, course: str, entries: list[CalendarEntry]) -> Ca
         title = fold(e.title)
         score = fuzz.token_set_ratio(fold(task.description), title)
         shared = words & _content_words(e.title)
-        numbers = {w for w in words if w.isdigit()} & {w for w in _content_words(e.title) if w.isdigit()}
+        numbers = {w for w in words if w.isdigit()} & {
+            w for w in _content_words(e.title) if w.isdigit()
+        }
         if numbers:
             score += 15
         if fold(course) in title or any(w in title for w in _content_words(course)):
@@ -77,8 +91,14 @@ def match_entry(task: TaskItem, course: str, entries: list[CalendarEntry]) -> Ca
 
 
 class CalendarService:
-    def __init__(self, cfg: GoogleConfig, auth: GoogleAuth | None, ics: IcsFeed | None = None,
-                 courses: list[Course] | None = None, build_service: Any = None) -> None:
+    def __init__(
+        self,
+        cfg: GoogleConfig,
+        auth: GoogleAuth | None,
+        ics: IcsFeed | None = None,
+        courses: list[Course] | None = None,
+        build_service: Any = None,
+    ) -> None:
         self.cfg = cfg
         self.auth = auth
         self.ics = ics
@@ -123,24 +143,50 @@ class CalendarService:
         out: list[CalendarEntry] = []
         cals = api.calendarList().list().execute().get("items", [])
         for cal in cals:
-            items = api.events().list(
-                calendarId=cal["id"], singleEvents=True, orderBy="startTime",
-                timeMin=datetime.combine(start, datetime.min.time()).astimezone().isoformat(),
-                timeMax=datetime.combine(end, datetime.min.time()).astimezone().isoformat(),
-                maxResults=250,
-            ).execute().get("items", [])
+            items = (
+                api.events()
+                .list(
+                    calendarId=cal["id"],
+                    singleEvents=True,
+                    orderBy="startTime",
+                    timeMin=datetime.combine(start, datetime.min.time()).astimezone().isoformat(),
+                    timeMax=datetime.combine(end, datetime.min.time()).astimezone().isoformat(),
+                    maxResults=250,
+                )
+                .execute()
+                .get("items", [])
+            )
             source = "universidad" if cal["id"].endswith(IMPORTED_SUFFIX) else "google"
             for ev in items:
                 s, e = ev.get("start", {}), ev.get("end", {})
                 if "dateTime" in s:
                     st = datetime.fromisoformat(s["dateTime"]).astimezone()
-                    en = datetime.fromisoformat(e["dateTime"]).astimezone() if "dateTime" in e else None
-                    out.append(CalendarEntry(ev.get("id", ""), ev.get("summary", ""), st.date(), st, en,
-                                             ev.get("description", "") or "", source))
+                    en = (
+                        datetime.fromisoformat(e["dateTime"]).astimezone()
+                        if "dateTime" in e
+                        else None
+                    )
+                    out.append(
+                        CalendarEntry(
+                            ev.get("id", ""),
+                            ev.get("summary", ""),
+                            st.date(),
+                            st,
+                            en,
+                            ev.get("description", "") or "",
+                            source,
+                        )
+                    )
                 elif "date" in s:
-                    out.append(CalendarEntry(ev.get("id", ""), ev.get("summary", ""),
-                                             date.fromisoformat(s["date"]), source=source,
-                                             description=ev.get("description", "") or ""))
+                    out.append(
+                        CalendarEntry(
+                            ev.get("id", ""),
+                            ev.get("summary", ""),
+                            date.fromisoformat(s["date"]),
+                            source=source,
+                            description=ev.get("description", "") or "",
+                        )
+                    )
         return out
 
     def university_imported(self) -> bool:
@@ -161,7 +207,9 @@ class CalendarService:
                 return course
         return None
 
-    def upcoming_classes(self, now: datetime | None = None, within_min: int = 60) -> list[UpcomingClass]:
+    def upcoming_classes(
+        self, now: datetime | None = None, within_min: int = 60
+    ) -> list[UpcomingClass]:
         now = now or datetime.now().astimezone()
         entries = self.calendar_entries(now.date(), now.date() + timedelta(days=1))
         out = []
@@ -186,7 +234,9 @@ class CalendarService:
                 current = api.calendars().get(calendarId=self.cfg.calendar_id).execute()
                 if current.get("summary") != name:
                     # La app cambió de nombre: se renombra el calendario (no se crea otro).
-                    api.calendars().patch(calendarId=self.cfg.calendar_id, body={"summary": name}).execute()
+                    api.calendars().patch(
+                        calendarId=self.cfg.calendar_id, body={"summary": name}
+                    ).execute()
                 return self.cfg.calendar_id
             except Exception:
                 log.info("El calendario propio ya no existe; se crea de nuevo")
@@ -210,18 +260,29 @@ class CalendarService:
         if cal_id is None or api is None:
             return None
         key = task_key(course, task)
-        found = api.events().list(calendarId=cal_id, privateExtendedProperty=f"transcriptor_key={key}",
-                                  maxResults=1).execute().get("items", [])
+        found = (
+            api.events()
+            .list(
+                calendarId=cal_id, privateExtendedProperty=f"transcriptor_key={key}", maxResults=1
+            )
+            .execute()
+            .get("items", [])
+        )
         if found:
             task.google_event_id = found[0]["id"]
             return task.google_event_id
         minutes = max(0, self.cfg.reminder_advance_days) * 24 * 60
         body = {
             "summary": f"{course}: {task.description}",
-            "description": f"Tarea de clase. Mencionada como «{task.due_text}»." if task.due_text else "Tarea de clase.",
+            "description": f"Tarea de clase. Mencionada como «{task.due_text}»."
+            if task.due_text
+            else "Tarea de clase.",
             "start": {"date": task.due.isoformat()},
             "end": {"date": (task.due + timedelta(days=1)).isoformat()},
-            "reminders": {"useDefault": False, "overrides": [{"method": "popup", "minutes": minutes or 60}]},
+            "reminders": {
+                "useDefault": False,
+                "overrides": [{"method": "popup", "minutes": minutes or 60}],
+            },
             "extendedProperties": {"private": {"transcriptor_key": key}},
         }
         created = api.events().insert(calendarId=cal_id, body=body).execute()
@@ -271,8 +332,17 @@ class CalendarService:
         items: list[dict[str, Any]] = []
         token = None
         while True:
-            resp = api.tasks().list(tasklist=list_id, showCompleted=completed, showHidden=completed,
-                                    maxResults=100, pageToken=token).execute()
+            resp = (
+                api.tasks()
+                .list(
+                    tasklist=list_id,
+                    showCompleted=completed,
+                    showHidden=completed,
+                    maxResults=100,
+                    pageToken=token,
+                )
+                .execute()
+            )
             items += resp.get("items", [])
             token = resp.get("nextPageToken")
             if not token:
@@ -283,7 +353,11 @@ class CalendarService:
         api = self.tasks_api()
         if api is None or not self.cfg.tasklist_id:
             return set()
-        return {t["id"] for t in self._all_tasks(api, self.cfg.tasklist_id) if t.get("status") == "completed"}
+        return {
+            t["id"]
+            for t in self._all_tasks(api, self.cfg.tasklist_id)
+            if t.get("status") == "completed"
+        }
 
     # ------------------------------------------------------------------ cruce con la universidad
     def university_entries(self, around: date | None = None) -> list[CalendarEntry]:
@@ -292,7 +366,9 @@ class CalendarService:
         if self.ics is not None:
             entries += self.ics.entries()
         try:
-            google = self.calendar_entries(around - timedelta(days=30), around + timedelta(days=120))
+            google = self.calendar_entries(
+                around - timedelta(days=30), around + timedelta(days=120)
+            )
             entries += [e for e in google if e.source == "universidad"]
         except Exception:
             log.warning("No se pudo leer el calendario de Google para el cruce")

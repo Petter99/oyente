@@ -11,8 +11,9 @@ from transcriptor.audio.types import SAMPLE_RATE, Samples
 
 
 class FakeTranscriber:
-    def __init__(self, script: list[str] | Callable[[float, float], str] | None = None,
-                 delay: float = 0.0) -> None:
+    def __init__(
+        self, script: list[str] | Callable[[float, float], str] | None = None, delay: float = 0.0
+    ) -> None:
         self.name = "fake"
         self.script = script or []
         self.calls = 0
@@ -32,8 +33,14 @@ class FakeTranscriber:
         tokens = text.split()
         step = (end - start) / max(len(tokens), 1)
         for i, tok in enumerate(tokens):
-            words.append(Word(start + i * step, start + (i + 1) * step, " " + tok,
-                              0.3 if tok.startswith("~") else 0.95))
+            words.append(
+                Word(
+                    start + i * step,
+                    start + (i + 1) * step,
+                    " " + tok,
+                    0.3 if tok.startswith("~") else 0.95,
+                )
+            )
         return Segment(start=start, end=end, text=text.replace("~", ""), words=words)
 
     def transcribe(self, samples: Samples, offset: float, opts: TranscribeOptions) -> list[Segment]:

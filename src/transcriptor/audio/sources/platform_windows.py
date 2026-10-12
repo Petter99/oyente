@@ -124,8 +124,10 @@ class AUDIOCLIENT_PROCESS_LOOPBACK_PARAMS(ctypes.Structure):
 
 
 class AUDIOCLIENT_ACTIVATION_PARAMS(ctypes.Structure):
-    _fields_ = [("ActivationType", ctypes.c_int),
-                ("ProcessLoopbackParams", AUDIOCLIENT_PROCESS_LOOPBACK_PARAMS)]
+    _fields_ = [
+        ("ActivationType", ctypes.c_int),
+        ("ProcessLoopbackParams", AUDIOCLIENT_PROCESS_LOOPBACK_PARAMS),
+    ]
 
 
 class BLOB(ctypes.Structure):
@@ -133,19 +135,28 @@ class BLOB(ctypes.Structure):
 
 
 class PROPVARIANT(ctypes.Structure):
-    _fields_ = [("vt", wintypes.USHORT), ("r1", wintypes.WORD), ("r2", wintypes.WORD),
-                ("r3", wintypes.WORD), ("blob", BLOB)]
+    _fields_ = [
+        ("vt", wintypes.USHORT),
+        ("r1", wintypes.WORD),
+        ("r2", wintypes.WORD),
+        ("r3", wintypes.WORD),
+        ("blob", BLOB),
+    ]
 
 
 class IAudioCaptureClient(IUnknown):
     _iid_ = GUID("{C8ADBD64-E71E-48a0-A4DE-185C395CD317}")
     _methods_ = [
-        COMMETHOD([], HRESULT, "GetBuffer",
-                  (["out"], POINTER(POINTER(ctypes.c_byte)), "ppData"),
-                  (["out"], POINTER(c_uint32), "pNumFramesToRead"),
-                  (["out"], POINTER(wintypes.DWORD), "pdwFlags"),
-                  (["in"], c_void_p, "pu64DevicePosition"),
-                  (["in"], c_void_p, "pu64QPCPosition")),
+        COMMETHOD(
+            [],
+            HRESULT,
+            "GetBuffer",
+            (["out"], POINTER(POINTER(ctypes.c_byte)), "ppData"),
+            (["out"], POINTER(c_uint32), "pNumFramesToRead"),
+            (["out"], POINTER(wintypes.DWORD), "pdwFlags"),
+            (["in"], c_void_p, "pu64DevicePosition"),
+            (["in"], c_void_p, "pu64QPCPosition"),
+        ),
         COMMETHOD([], HRESULT, "ReleaseBuffer", (["in"], c_uint32, "NumFramesRead")),
         COMMETHOD([], HRESULT, "GetNextPacketSize", (["out"], POINTER(c_uint32), "pNumFrames")),
     ]
@@ -154,45 +165,78 @@ class IAudioCaptureClient(IUnknown):
 class IAudioClient(IUnknown):
     _iid_ = GUID("{1CB9AD4C-DBFA-4c32-B178-C2F568A703B2}")
     _methods_ = [
-        COMMETHOD([], HRESULT, "Initialize",
-                  (["in"], ctypes.c_int, "ShareMode"),
-                  (["in"], wintypes.DWORD, "StreamFlags"),
-                  (["in"], ctypes.c_longlong, "hnsBufferDuration"),
-                  (["in"], ctypes.c_longlong, "hnsPeriodicity"),
-                  (["in"], POINTER(WAVEFORMATEX), "pFormat"),
-                  (["in"], c_void_p, "AudioSessionGuid")),
+        COMMETHOD(
+            [],
+            HRESULT,
+            "Initialize",
+            (["in"], ctypes.c_int, "ShareMode"),
+            (["in"], wintypes.DWORD, "StreamFlags"),
+            (["in"], ctypes.c_longlong, "hnsBufferDuration"),
+            (["in"], ctypes.c_longlong, "hnsPeriodicity"),
+            (["in"], POINTER(WAVEFORMATEX), "pFormat"),
+            (["in"], c_void_p, "AudioSessionGuid"),
+        ),
         COMMETHOD([], HRESULT, "GetBufferSize", (["out"], POINTER(c_uint32), "pNumBufferFrames")),
-        COMMETHOD([], HRESULT, "GetStreamLatency", (["out"], POINTER(ctypes.c_longlong), "phnsLatency")),
-        COMMETHOD([], HRESULT, "GetCurrentPadding", (["out"], POINTER(c_uint32), "pNumPaddingFrames")),
-        COMMETHOD([], HRESULT, "IsFormatSupported", (["in"], ctypes.c_int, "ShareMode"),
-                  (["in"], POINTER(WAVEFORMATEX), "pFormat"),
-                  (["out"], POINTER(POINTER(WAVEFORMATEX)), "ppClosestMatch")),
-        COMMETHOD([], HRESULT, "GetMixFormat", (["out"], POINTER(POINTER(WAVEFORMATEX)), "ppDeviceFormat")),
-        COMMETHOD([], HRESULT, "GetDevicePeriod", (["out"], POINTER(ctypes.c_longlong), "a"),
-                  (["out"], POINTER(ctypes.c_longlong), "b")),
+        COMMETHOD(
+            [], HRESULT, "GetStreamLatency", (["out"], POINTER(ctypes.c_longlong), "phnsLatency")
+        ),
+        COMMETHOD(
+            [], HRESULT, "GetCurrentPadding", (["out"], POINTER(c_uint32), "pNumPaddingFrames")
+        ),
+        COMMETHOD(
+            [],
+            HRESULT,
+            "IsFormatSupported",
+            (["in"], ctypes.c_int, "ShareMode"),
+            (["in"], POINTER(WAVEFORMATEX), "pFormat"),
+            (["out"], POINTER(POINTER(WAVEFORMATEX)), "ppClosestMatch"),
+        ),
+        COMMETHOD(
+            [], HRESULT, "GetMixFormat", (["out"], POINTER(POINTER(WAVEFORMATEX)), "ppDeviceFormat")
+        ),
+        COMMETHOD(
+            [],
+            HRESULT,
+            "GetDevicePeriod",
+            (["out"], POINTER(ctypes.c_longlong), "a"),
+            (["out"], POINTER(ctypes.c_longlong), "b"),
+        ),
         COMMETHOD([], HRESULT, "Start"),
         COMMETHOD([], HRESULT, "Stop"),
         COMMETHOD([], HRESULT, "Reset"),
         COMMETHOD([], HRESULT, "SetEventHandle", (["in"], wintypes.HANDLE, "eventHandle")),
-        COMMETHOD([], HRESULT, "GetService", (["in"], POINTER(GUID), "riid"),
-                  (["out"], POINTER(POINTER(IUnknown)), "ppv")),
+        COMMETHOD(
+            [],
+            HRESULT,
+            "GetService",
+            (["in"], POINTER(GUID), "riid"),
+            (["out"], POINTER(POINTER(IUnknown)), "ppv"),
+        ),
     ]
 
 
 class IActivateAudioInterfaceAsyncOperation(IUnknown):
     _iid_ = GUID("{72A22D78-CDE4-431D-B8CC-843A71199B6D}")
     _methods_ = [
-        COMMETHOD([], HRESULT, "GetActivateResult",
-                  (["out"], POINTER(HRESULT), "activateResult"),
-                  (["out"], POINTER(POINTER(IUnknown)), "activatedInterface")),
+        COMMETHOD(
+            [],
+            HRESULT,
+            "GetActivateResult",
+            (["out"], POINTER(HRESULT), "activateResult"),
+            (["out"], POINTER(POINTER(IUnknown)), "activatedInterface"),
+        ),
     ]
 
 
 class IActivateAudioInterfaceCompletionHandler(IUnknown):
     _iid_ = GUID("{41D949AB-9862-444A-80F6-C261334DA5EB}")
     _methods_ = [
-        COMMETHOD([], HRESULT, "ActivateCompleted",
-                  (["in"], POINTER(IActivateAudioInterfaceAsyncOperation), "activateOperation")),
+        COMMETHOD(
+            [],
+            HRESULT,
+            "ActivateCompleted",
+            (["in"], POINTER(IActivateAudioInterfaceAsyncOperation), "activateOperation"),
+        ),
     ]
 
 
@@ -210,7 +254,7 @@ class _CompletionHandler(comtypes.COMObject):
         self.client: Any = None
         self.error: str | None = None
 
-    def ActivateCompleted(self, operation: Any) -> int:  # noqa: N802 (nombre COM)
+    def ActivateCompleted(self, operation: Any) -> int:
         try:
             hr, punk = operation.GetActivateResult()
             if hr != 0:
@@ -250,7 +294,9 @@ class WindowsProcessLoopbackSource(AudioSource):
         params = AUDIOCLIENT_ACTIVATION_PARAMS()
         params.ActivationType = AUDIOCLIENT_ACTIVATION_TYPE_PROCESS_LOOPBACK
         params.ProcessLoopbackParams.TargetProcessId = int(self.app.id)
-        params.ProcessLoopbackParams.ProcessLoopbackMode = PROCESS_LOOPBACK_MODE_INCLUDE_TARGET_PROCESS_TREE
+        params.ProcessLoopbackParams.ProcessLoopbackMode = (
+            PROCESS_LOOPBACK_MODE_INCLUDE_TARGET_PROCESS_TREE
+        )
         prop = PROPVARIANT()
         prop.vt = VT_BLOB
         prop.blob.cbSize = ctypes.sizeof(params)
@@ -278,17 +324,30 @@ class WindowsProcessLoopbackSource(AudioSource):
         client = None
         try:
             client = self._activate()
-            fmt = WAVEFORMATEX(WAVE_FORMAT_PCM, self.CHANNELS, self.RATE,
-                               self.RATE * self.CHANNELS * 2, self.CHANNELS * 2, 16, 0)
+            fmt = WAVEFORMATEX(
+                WAVE_FORMAT_PCM,
+                self.CHANNELS,
+                self.RATE,
+                self.RATE * self.CHANNELS * 2,
+                self.CHANNELS * 2,
+                16,
+                0,
+            )
             client.Initialize(
                 AUDCLNT_SHAREMODE_SHARED,
-                AUDCLNT_STREAMFLAGS_LOOPBACK | AUDCLNT_STREAMFLAGS_EVENTCALLBACK
+                AUDCLNT_STREAMFLAGS_LOOPBACK
+                | AUDCLNT_STREAMFLAGS_EVENTCALLBACK
                 | AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM,
-                2_000_000, 0, byref(fmt), None,
+                2_000_000,
+                0,
+                byref(fmt),
+                None,
             )
             event = kernel32.CreateEventW(None, False, False, None)
             client.SetEventHandle(event)
-            capture = client.GetService(byref(IAudioCaptureClient._iid_)).QueryInterface(IAudioCaptureClient)
+            capture = client.GetService(byref(IAudioCaptureClient._iid_)).QueryInterface(
+                IAudioCaptureClient
+            )
             client.Start()
             self._ready.set()
             while self.running:
@@ -300,7 +359,9 @@ class WindowsProcessLoopbackSource(AudioSource):
                         pcm = np.zeros((n, self.CHANNELS), dtype=np.float32)
                     else:
                         raw = ctypes.cast(data, POINTER(c_int16 * (n * self.CHANNELS))).contents
-                        pcm = np.frombuffer(raw, dtype=np.int16).reshape(-1, self.CHANNELS) / 32768.0
+                        pcm = (
+                            np.frombuffer(raw, dtype=np.int16).reshape(-1, self.CHANNELS) / 32768.0
+                        )
                     capture.ReleaseBuffer(n)
                     self._emit(pcm.astype(np.float32), self.RATE)
         except Exception as exc:

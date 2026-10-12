@@ -47,15 +47,23 @@ class FinalLabels:
 
 
 class SpeakerIdentifier:
-    def __init__(self, embedder: SpeakerEmbedder, profiles: SpeakerProfileStore, course_id: str,
-                 threshold: float | None = None, distinguish_participants: bool = True,
-                 cluster_threshold: float | None = None) -> None:
+    def __init__(
+        self,
+        embedder: SpeakerEmbedder,
+        profiles: SpeakerProfileStore,
+        course_id: str,
+        threshold: float | None = None,
+        distinguish_participants: bool = True,
+        cluster_threshold: float | None = None,
+    ) -> None:
         self.embedder = embedder
         self.profiles = profiles
         self.course_id = course_id
         self.threshold = threshold if threshold is not None else embedder.default_threshold
         self.distinguish = distinguish_participants
-        self.cluster_threshold = cluster_threshold if cluster_threshold is not None else self.threshold
+        self.cluster_threshold = (
+            cluster_threshold if cluster_threshold is not None else self.threshold
+        )
         self.profile = profiles.get(course_id, embedder.name)
         self._live_clusters: list[Cluster] = []
 
@@ -91,8 +99,9 @@ class SpeakerIdentifier:
         return i, scores[i]
 
     # ------------------------------------------------------------------ pasada final
-    def label_final(self, segments: list[Segment],
-                    embeddings: list[np.ndarray | None]) -> FinalLabels:
+    def label_final(
+        self, segments: list[Segment], embeddings: list[np.ndarray | None]
+    ) -> FinalLabels:
         clusters: list[Cluster] = []
         assignment: list[int | None] = []
         for idx, (seg, emb) in enumerate(zip(segments, embeddings, strict=True)):
@@ -120,10 +129,14 @@ class SpeakerIdentifier:
                 teacher = max(range(len(clusters)), key=lambda i: clusters[i].seconds)
                 needs_confirmation = not self.profiles.confirmed(self.course_id, self.embedder.name)
 
-        order = sorted((i for i in range(len(clusters)) if i != teacher),
-                       key=lambda i: min(clusters[i].members))
-        participant_name = {c: f"{PARTICIPANT} {n}" if self.distinguish else PARTICIPANT
-                            for n, c in enumerate(order, 1)}
+        order = sorted(
+            (i for i in range(len(clusters)) if i != teacher),
+            key=lambda i: min(clusters[i].members),
+        )
+        participant_name = {
+            c: f"{PARTICIPANT} {n}" if self.distinguish else PARTICIPANT
+            for n, c in enumerate(order, 1)
+        }
         labels = []
         for seg, a in zip(segments, assignment, strict=True):
             if seg.channel == "mic":
@@ -133,11 +146,17 @@ class SpeakerIdentifier:
             else:
                 labels.append(TEACHER if a == teacher else participant_name[a])
         summary = [(c.members[0], c.seconds) for c in clusters]
-        return FinalLabels(labels, teacher, needs_confirmation, summary,
-                           clusters[teacher].centroid if teacher is not None else None)
+        return FinalLabels(
+            labels,
+            teacher,
+            needs_confirmation,
+            summary,
+            clusters[teacher].centroid if teacher is not None else None,
+        )
 
-    def _merge_close(self, clusters: list[Cluster],
-                     assignment: list[int | None]) -> tuple[list[Cluster], list[int | None]]:
+    def _merge_close(
+        self, clusters: list[Cluster], assignment: list[int | None]
+    ) -> tuple[list[Cluster], list[int | None]]:
         merged = True
         while merged and len(clusters) > 1:
             merged = False
@@ -148,12 +167,16 @@ class SpeakerIdentifier:
                         for m in cj.members:
                             ci.members.append(m)
                         total = ci.seconds + cj.seconds
-                        ci.centroid = (ci.centroid * ci.seconds + cj.centroid * cj.seconds) / max(total, 1e-9)
+                        ci.centroid = (ci.centroid * ci.seconds + cj.centroid * cj.seconds) / max(
+                            total, 1e-9
+                        )
                         ci.centroid /= max(float(np.linalg.norm(ci.centroid)), 1e-9)
                         ci.seconds = total
                         del clusters[j]
-                        assignment = [i if a == j else (a - 1 if a is not None and a > j else a)
-                                      for a in assignment]
+                        assignment = [
+                            i if a == j else (a - 1 if a is not None and a > j else a)
+                            for a in assignment
+                        ]
                         merged = True
                         break
                 if merged:

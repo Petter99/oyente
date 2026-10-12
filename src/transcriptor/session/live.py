@@ -119,8 +119,9 @@ class LiveRecorder:
                 src.stop()
             raise
         for channel, state in self._channels.items():
-            state.thread = threading.Thread(target=self._read_loop, args=(channel,),
-                                            name=f"audio-{channel}", daemon=True)
+            state.thread = threading.Thread(
+                target=self._read_loop, args=(channel,), name=f"audio-{channel}", daemon=True
+            )
             state.thread.start()
         self._worker = threading.Thread(target=self._asr_loop, name="asr-live", daemon=True)
         self._worker.start()
@@ -151,8 +152,9 @@ class LiveRecorder:
         new_source.on_lost(self._on_lost)
         new_source.start()
         if state.thread is None or not state.thread.is_alive():
-            state.thread = threading.Thread(target=self._read_loop, args=(channel,),
-                                            name=f"audio-{channel}", daemon=True)
+            state.thread = threading.Thread(
+                target=self._read_loop, args=(channel,), name=f"audio-{channel}", daemon=True
+            )
             state.thread.start()
         self.session.source_label = new_source.info.label
         self.bus.emit("source_changed", channel=channel, label=new_source.info.label)
@@ -184,7 +186,9 @@ class LiveRecorder:
 
     def _on_lost(self, source: AudioSource, reason: str) -> None:
         # La sesión sigue: el reloj rellena con silencio y la interfaz ofrece cambiar de fuente.
-        self.bus.emit("source_lost", channel=source.info.channel, label=source.info.label, reason=reason)
+        self.bus.emit(
+            "source_lost", channel=source.info.channel, label=source.info.label, reason=reason
+        )
 
     # ------------------------------------------------------------------ hilos
     def _read_loop(self, channel: Channel) -> None:

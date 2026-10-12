@@ -22,8 +22,9 @@ log = logging.getLogger(__name__)
 
 
 class FasterWhisperTranscriber:
-    def __init__(self, model: str, device: str = "cpu", compute_type: str = "int8",
-                 live: bool = False) -> None:
+    def __init__(
+        self, model: str, device: str = "cpu", compute_type: str = "int8", live: bool = False
+    ) -> None:
         self.name = f"faster-whisper/{model}"
         self.model_name = model
         self.device = device
@@ -38,7 +39,9 @@ class FasterWhisperTranscriber:
 
             log.info("Cargando %s (%s, %s)", self.model_name, self.device, self.compute_type)
             self._model = WhisperModel(
-                self.model_name, device=self.device, compute_type=self.compute_type,
+                self.model_name,
+                device=self.device,
+                compute_type=self.compute_type,
                 download_root=str(models_dir() / "whisper"),
             )
         return self._model
@@ -63,8 +66,14 @@ class FasterWhisperTranscriber:
     @staticmethod
     def _convert(s: Any) -> Segment:
         words = [Word(w.start, w.end, w.word, w.probability) for w in (s.words or [])]
-        return Segment(start=s.start, end=s.end, text=s.text.strip(), words=words,
-                       avg_logprob=s.avg_logprob, no_speech_prob=s.no_speech_prob)
+        return Segment(
+            start=s.start,
+            end=s.end,
+            text=s.text.strip(),
+            words=words,
+            avg_logprob=s.avg_logprob,
+            no_speech_prob=s.no_speech_prob,
+        )
 
     def transcribe(self, samples: Samples, offset: float, opts: TranscribeOptions) -> list[Segment]:
         segments, _ = self._run(samples, opts, vad=False)

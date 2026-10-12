@@ -9,12 +9,16 @@ from pydantic import BaseModel, Field
 
 class LLMKeyPoint(BaseModel):
     texto: str = Field(description="Punto importante, una frase")
-    minuto: str = Field(description="Marca [hh:mm:ss] de la transcripción donde se dijo, o cadena vacía")
+    minuto: str = Field(
+        description="Marca [hh:mm:ss] de la transcripción donde se dijo, o cadena vacía"
+    )
 
 
 class LLMTask(BaseModel):
     descripcion: str = Field(description="Qué hay que hacer o estudiar, en una frase")
-    fecha_texto: str = Field(description="Expresión de fecha tal como se dijo (p. ej. 'el próximo jueves'), o vacío")
+    fecha_texto: str = Field(
+        description="Expresión de fecha tal como se dijo (p. ej. 'el próximo jueves'), o vacío"
+    )
     tipo: Literal["tarea", "examen", "lectura", "otro"]
     minuto: str = Field(description="Marca [hh:mm:ss] donde se mencionó, o vacío")
 

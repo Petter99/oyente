@@ -55,14 +55,16 @@ def extract_tasks(segments: list[Segment], class_day: date) -> list[TaskItem]:
         if key in seen:
             continue
         seen.add(key)
-        tasks.append(TaskItem(
-            description=seg.text.strip(),
-            due_text=phrase or "",
-            due=resolve(phrase, class_day) if phrase else None,
-            t=seg.start,
-            confirmed=False,
-            kind=kind,  # type: ignore[arg-type]
-        ))
+        tasks.append(
+            TaskItem(
+                description=seg.text.strip(),
+                due_text=phrase or "",
+                due=resolve(phrase, class_day) if phrase else None,
+                t=seg.start,
+                confirmed=False,
+                kind=kind,  # type: ignore[arg-type]
+            )
+        )
     return tasks
 
 
@@ -72,5 +74,7 @@ def live_trigger(text: str) -> bool:
     return bool(
         (TASK_WORDS.search(t) and TRIGGER_WORDS.search(t))
         or EXAM_WORDS.search(t)
-        or re.search(r"\b(importante|no olviden|esto viene|va a venir|para el proximo|ojo con)\b", t)
+        or re.search(
+            r"\b(importante|no olviden|esto viene|va a venir|para el proximo|ojo con)\b", t
+        )
     )

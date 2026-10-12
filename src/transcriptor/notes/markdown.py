@@ -24,7 +24,7 @@ def split_frontmatter(text: str) -> tuple[str | None, str]:
     m = FM_RE.match(text)
     if not m:
         return None, text
-    return m.group(1) or "", text[m.end():]
+    return m.group(1) or "", text[m.end() :]
 
 
 def parse_frontmatter(text: str) -> dict[str, Any]:
@@ -39,9 +39,10 @@ def parse_frontmatter(text: str) -> dict[str, Any]:
 
 
 def _yaml_value(value: Any) -> str:
-    dumped = yaml.safe_dump({"k": value}, allow_unicode=True, default_flow_style=False,
-                            sort_keys=False, width=10_000)
-    return dumped[len("k:"):].rstrip("\n")
+    dumped = yaml.safe_dump(
+        {"k": value}, allow_unicode=True, default_flow_style=False, sort_keys=False, width=10_000
+    )
+    return dumped[len("k:") :].rstrip("\n")
 
 
 def render_frontmatter(data: dict[str, Any]) -> str:
@@ -70,7 +71,9 @@ def set_properties(text: str, values: dict[str, Any]) -> str:
         if key is not None and key in remaining:
             # Saltar las líneas de continuación (listas o bloques indentados) de esta clave.
             j = i + 1
-            while j < len(lines) and (lines[j].startswith((" ", "\t", "-")) and not re.match(r"^[^\s#-][^:]*:", lines[j])):
+            while j < len(lines) and (
+                lines[j].startswith((" ", "\t", "-")) and not re.match(r"^[^\s#-][^:]*:", lines[j])
+            ):
                 j += 1
             out.append(f"{key}:{_yaml_value(remaining.pop(key))}{newline}")
             i = j
@@ -81,7 +84,7 @@ def set_properties(text: str, values: dict[str, Any]) -> str:
         out[-1] += newline
     for key, value in remaining.items():
         out.append(f"{key}:{_yaml_value(value)}{newline}")
-    return f"---{newline}{''.join(out)}---{m.group(2) or newline}" + text[m.end():]
+    return f"---{newline}{''.join(out)}---{m.group(2) or newline}" + text[m.end() :]
 
 
 def block_markers(name: str) -> tuple[str, str]:

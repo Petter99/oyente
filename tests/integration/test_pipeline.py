@@ -8,9 +8,9 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-
 from tests.fakes import FakeLLM
 from tests.synth import ESTUDIANTE, PROFESOR, YO, conversation, silence, speech
+
 from transcriptor.asr.base import TranscribeOptions
 from transcriptor.asr.fake import FakeTranscriber
 from transcriptor.audio.sources import FileAudioSource
@@ -49,17 +49,30 @@ def no_network(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def _class_audio() -> tuple[np.ndarray, np.ndarray]:
-    clase, _ = conversation([(PROFESOR, 4.0), (PROFESOR, 3.0), (ESTUDIANTE, 2.0), (PROFESOR, 3.5),
-                             (PROFESOR, 4.0), (PROFESOR, 3.0)], pause=1.0)
+    clase, _ = conversation(
+        [
+            (PROFESOR, 4.0),
+            (PROFESOR, 3.0),
+            (ESTUDIANTE, 2.0),
+            (PROFESOR, 3.5),
+            (PROFESOR, 4.0),
+            (PROFESOR, 3.0),
+        ],
+        pause=1.0,
+    )
     mic = np.concatenate([silence(9.0), speech(YO, 2.0), silence(clase.size / 16000 - 11.0)])
     return clase.astype(np.float32), mic.astype(np.float32)
 
 
-def _deps(tmp_path: Path, vault: Path, provider: object, cfg: AppConfig | None = None) -> FinalizeDeps:
+def _deps(
+    tmp_path: Path, vault: Path, provider: object, cfg: AppConfig | None = None
+) -> FinalizeDeps:
     cfg = cfg or AppConfig()
     cfg.general.vault_path = str(vault)
     return FinalizeDeps(
-        cfg=cfg, store=SessionStore(tmp_path / "sesiones"), bus=EventBus(),
+        cfg=cfg,
+        store=SessionStore(tmp_path / "sesiones"),
+        bus=EventBus(),
         index=SearchIndex(tmp_path / "indice.sqlite", HashingEmbedder()),
         layout=VaultLayout.from_config(cfg, vault),
         final_transcriber=FakeTranscriber(SCRIPT),
@@ -71,15 +84,28 @@ def _deps(tmp_path: Path, vault: Path, provider: object, cfg: AppConfig | None =
 
 def record_class(deps: FinalizeDeps, course: Course, started: datetime) -> RecordingSession:
     clase, mic = _class_audio()
-    session = RecordingSession(course_id=course.id, course_name=course.name, teacher=course.teacher,
-                               started_at=started, source_label="Google Chrome")
+    session = RecordingSession(
+        course_id=course.id,
+        course_name=course.name,
+        teacher=course.teacher,
+        started_at=started,
+        source_label="Google Chrome",
+    )
     work = deps.store.dir(session.id)
     live_txt = work / "transcripcion.live.txt"
     rec = LiveRecorder(
         session,
-        [FileAudioSource(samples=clase, channel="clase"), FileAudioSource(samples=mic, channel="mic")],
-        FakeTranscriber(SCRIPT + ["(yo)"]), None, EnergyDetector,
-        TranscribeOptions(), work, live_txt, deps.bus,
+        [
+            FileAudioSource(samples=clase, channel="clase"),
+            FileAudioSource(samples=mic, channel="mic"),
+        ],
+        FakeTranscriber(SCRIPT + ["(yo)"]),
+        None,
+        EnergyDetector,
+        TranscribeOptions(),
+        work,
+        live_txt,
+        deps.bus,
     )
     rec.start()
     for state in rec._channels.values():
@@ -133,7 +159,10 @@ def test_t6_4_prev_next_chain_out_of_order(tmp_path: Path, vault: Path) -> None:
     s3 = record_class(deps, course, datetime(2026, 10, 14, 9, 0))
     s1 = record_class(deps, course, datetime(2026, 10, 7, 9, 0))
     s2 = record_class(deps, course, datetime(2026, 10, 9, 9, 0))
-    fm = {s.id: parse_frontmatter((vault / s.note_path).read_text(encoding="utf-8")) for s in (s1, s2, s3)}
+    fm = {
+        s.id: parse_frontmatter((vault / s.note_path).read_text(encoding="utf-8"))
+        for s in (s1, s2, s3)
+    }
     stem = {s.id: Path(s.note_path).stem for s in (s1, s2, s3)}
     assert fm[s1.id]["anterior"] == "" and stem[s2.id] in fm[s1.id]["siguiente"]
     assert stem[s1.id] in fm[s2.id]["anterior"] and stem[s3.id] in fm[s2.id]["siguiente"]
@@ -146,14 +175,17 @@ def test_t6_4_prev_next_chain_out_of_order(tmp_path: Path, vault: Path) -> None:
 
 def test_guardian_llm_never_changes_transcript(tmp_path: Path, vault: Path) -> None:
     course = Course(name="Cálculo II", teacher="Ing. Pérez")
-    a = record_class(_deps(tmp_path / "a", vault / "a", NullLLMProvider()), course,
-                     datetime(2026, 10, 12, 18, 0))
-    b = record_class(_deps(tmp_path / "b", vault / "b", FakeLLM()), course, datetime(2026, 10, 12, 18, 0))
+    a = record_class(
+        _deps(tmp_path / "a", vault / "a", NullLLMProvider()), course, datetime(2026, 10, 12, 18, 0)
+    )
+    b = record_class(
+        _deps(tmp_path / "b", vault / "b", FakeLLM()), course, datetime(2026, 10, 12, 18, 0)
+    )
     ta = get_block((vault / "a" / a.note_path).read_text(encoding="utf-8"), "transcripcion")
     tb = get_block((vault / "b" / b.note_path).read_text(encoding="utf-8"), "transcripcion")
     assert ta == tb
     assert b.llm_processed and b.summary and b.summary.title == "Integración por partes"
-    note_b = (vault / "b" / b.note_path)
+    note_b = vault / "b" / b.note_path
     assert note_b.name == "2026-10-12 Integración por partes.md"
     text = note_b.read_text(encoding="utf-8")
     assert "[!summary] Resumen" in text
@@ -169,7 +201,9 @@ def test_t6_5_topics_reuse_existing_note(tmp_path: Path, vault: Path) -> None:
     fm = parse_frontmatter((vault / s.note_path).read_text(encoding="utf-8"))
     assert "[[Conceptos/Integración por partes]]" in fm["temas"]
     # La nota del usuario no se modificó y no se creó un duplicado en Temas/.
-    assert existing.read_text(encoding="utf-8") == "# Integración por partes\nMis apuntes propios.\n"
+    assert (
+        existing.read_text(encoding="utf-8") == "# Integración por partes\nMis apuntes propios.\n"
+    )
     assert not (vault / "Temas" / "Integración por partes.md").exists()
     assert (vault / "Temas" / "Regla LIATE.md").exists()
 
@@ -202,8 +236,10 @@ def test_reprocess_pending_class_with_llm(tmp_path: Path, vault: Path) -> None:
     s = record_class(deps, course, datetime(2026, 10, 12, 18, 0))
     note = vault / s.note_path
     # El usuario escribe sus apuntes en la nota.
-    note.write_text(note.read_text(encoding="utf-8") + "\n## Mis apuntes\nNo olvidar repasar.\n",
-                    encoding="utf-8")
+    note.write_text(
+        note.read_text(encoding="utf-8") + "\n## Mis apuntes\nNo olvidar repasar.\n",
+        encoding="utf-8",
+    )
     deps.postprocessor = PostProcessor(FakeLLM())
     fin = Finalizer(deps)
     s = fin.reprocess_with_llm(s, course)

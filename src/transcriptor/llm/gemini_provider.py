@@ -53,20 +53,28 @@ class GeminiProvider:
     def _contents(self, req: LLMRequest) -> list[Any]:
         from google.genai import types
 
-        return [types.Content(role="model" if m.role == "assistant" else "user",
-                              parts=[types.Part(text=m.content)]) for m in req.messages]
+        return [
+            types.Content(
+                role="model" if m.role == "assistant" else "user",
+                parts=[types.Part(text=m.content)],
+            )
+            for m in req.messages
+        ]
 
     def _call(self, req: LLMRequest, json_schema: dict | None = None) -> LLMResponse:
         from google.genai import errors, types
 
         model = getattr(self.models, req.tier)
-        config = types.GenerateContentConfig(system_instruction=req.system,
-                                             max_output_tokens=req.max_tokens)
+        config = types.GenerateContentConfig(
+            system_instruction=req.system, max_output_tokens=req.max_tokens
+        )
         if json_schema is not None:
             config.response_mime_type = "application/json"
             config.response_json_schema = json_schema
         try:
-            resp = self.client.models.generate_content(model=model, contents=self._contents(req), config=config)
+            resp = self.client.models.generate_content(
+                model=model, contents=self._contents(req), config=config
+            )
         except errors.ClientError as exc:
             if exc.code in (401, 403):
                 raise LLMAuthError("La API key de Gemini no es válida") from exc
@@ -92,7 +100,8 @@ class GeminiProvider:
                 raise LLMRefusalError(f"Gemini rechazó la respuesta ({reason})")
         meta = getattr(resp, "usage_metadata", None)
         usage = Usage(
-            input_tokens=(getattr(meta, "prompt_token_count", 0) or 0) - (getattr(meta, "cached_content_token_count", 0) or 0),
+            input_tokens=(getattr(meta, "prompt_token_count", 0) or 0)
+            - (getattr(meta, "cached_content_token_count", 0) or 0),
             output_tokens=getattr(meta, "candidates_token_count", 0) or 0,
             cache_read_tokens=getattr(meta, "cached_content_token_count", 0) or 0,
         )
@@ -107,8 +116,9 @@ class GeminiProvider:
 
     def count_tokens(self, req: LLMRequest) -> int:
         try:
-            res = self.client.models.count_tokens(model=getattr(self.models, req.tier),
-                                                  contents=self._contents(req))
+            res = self.client.models.count_tokens(
+                model=getattr(self.models, req.tier), contents=self._contents(req)
+            )
             return int(res.total_tokens or 0)
         except Exception as exc:
             raise LLMUnavailableError(str(exc)) from exc

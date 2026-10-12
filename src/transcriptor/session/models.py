@@ -50,7 +50,9 @@ class ClassSummary(BaseModel):
 
 
 class RecordingSession(BaseModel):
-    id: str = Field(default_factory=lambda: datetime.now().strftime("%Y%m%d-%H%M%S-") + uuid.uuid4().hex[:4])
+    id: str = Field(
+        default_factory=lambda: datetime.now().strftime("%Y%m%d-%H%M%S-") + uuid.uuid4().hex[:4]
+    )
     course_id: str
     course_name: str
     teacher: str = ""

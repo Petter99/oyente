@@ -8,8 +8,8 @@ from datetime import date
 from pathlib import Path
 
 import pytest
-
 from tests.fakes import FakeLLM
+
 from transcriptor.asr.base import Segment
 from transcriptor.events import EventBus
 from transcriptor.live.assistant import LiveAssistant
@@ -21,7 +21,12 @@ from transcriptor.llm.base import (
     LLMRequest,
     LLMUnavailableError,
 )
-from transcriptor.llm.composite import BudgetedProvider, FallbackProvider, NullLLMProvider, TokenLedger
+from transcriptor.llm.composite import (
+    BudgetedProvider,
+    FallbackProvider,
+    NullLLMProvider,
+    TokenLedger,
+)
 from transcriptor.llm.schema import strict_schema
 from transcriptor.llm.schemas import ChunkInsights, LLMClassSummary, LLMTask
 from transcriptor.processing.postprocess import PostProcessor
@@ -59,7 +64,9 @@ def test_t8_6_monthly_budget(tmp_path: Path) -> None:
     provider.generate(REQ)
     assert ledger.used() == 3000
     with pytest.raises(LLMBudgetExceededError):
-        provider.generate(LLMRequest(system="s", messages=[LLMMessage("user", "x")], max_tokens=10000))
+        provider.generate(
+            LLMRequest(system="s", messages=[LLMMessage("user", "x")], max_tokens=10000)
+        )
     assert not BudgetedProvider(FakeLLM(), ledger, None).exhausted
 
 
@@ -78,8 +85,15 @@ def test_strict_schema_is_portable() -> None:
     assert set(task["required"]) == set(LLMTask.model_fields)
 
 
-SEGS = [Segment(i * 10.0, i * 10 + 8, f"frase número {i} sobre integrales y la regla LIATE", speaker="Profesor")
-        for i in range(30)]
+SEGS = [
+    Segment(
+        i * 10.0,
+        i * 10 + 8,
+        f"frase número {i} sobre integrales y la regla LIATE",
+        speaker="Profesor",
+    )
+    for i in range(30)
+]
 
 
 def test_postprocessor_one_call_per_class() -> None:
@@ -93,19 +107,24 @@ def test_postprocessor_one_call_per_class() -> None:
 
 
 def test_postprocessor_without_llm_is_local() -> None:
-    summary, used = PostProcessor(NullLLMProvider()).summarize(SEGS, date(2026, 10, 12), "Cálculo II")
+    summary, used = PostProcessor(NullLLMProvider()).summarize(
+        SEGS, date(2026, 10, 12), "Cálculo II"
+    )
     assert not used and summary.source == "local"
 
 
 def test_postprocessor_falls_back_to_local_on_error() -> None:
     summary, used = PostProcessor(FakeLLM(fail=LLMUnavailableError("caído"))).summarize(
-        SEGS, date(2026, 10, 12), "Cálculo II")
+        SEGS, date(2026, 10, 12), "Cálculo II"
+    )
     assert not used and summary.source == "local"
 
 
 def test_postprocessor_merges_live_partials_cheaply() -> None:
     llm = FakeLLM()
-    partial = ChunkInsights(tareas=[], puntos_clave=[], preguntas_sugeridas=[], temas=["Integrales"])
+    partial = ChunkInsights(
+        tareas=[], puntos_clave=[], preguntas_sugeridas=[], temas=["Integrales"]
+    )
     PostProcessor(llm).summarize(SEGS, date(2026, 10, 12), "Cálculo II", partials=[partial])
     prompt = llm.calls[0][0].messages[0].content
     assert "Parciales" in prompt and len(prompt) < 9000
@@ -129,7 +148,9 @@ def _assistant(llm: FakeLLM, clock: Clock, **kw: object) -> tuple[LiveAssistant,
 def test_t9_1_trigger_word_calls_soon() -> None:
     llm, clock = FakeLLM(), Clock()
     assistant, events = _assistant(llm, clock)
-    assistant.on_segment(Segment(0, 5, "La tarea es para el jueves, hoja cuatro.", speaker="Profesor"))
+    assistant.on_segment(
+        Segment(0, 5, "La tarea es para el jueves, hoja cuatro.", speaker="Profesor")
+    )
     assert not llm.calls  # espera a que termine la idea
     clock.t = 25
     assistant.on_segment(Segment(20, 25, "Y lean el capítulo siete.", speaker="Profesor"))

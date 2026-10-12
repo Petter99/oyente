@@ -16,7 +16,13 @@ from collections.abc import Callable
 
 from transcriptor.asr.base import Segment
 from transcriptor.events import EventBus
-from transcriptor.llm.base import LLMBudgetExceededError, LLMError, LLMMessage, LLMProvider, LLMRequest
+from transcriptor.llm.base import (
+    LLMBudgetExceededError,
+    LLMError,
+    LLMMessage,
+    LLMProvider,
+    LLMRequest,
+)
 from transcriptor.llm.composite import structured_with_retry
 from transcriptor.llm.prompts import LIVE_SYSTEM, compact_transcript
 from transcriptor.llm.schemas import ChunkInsights
@@ -29,9 +35,16 @@ TRIGGER_DELAY_S = 20.0  # tras un disparador, esperar a que el profesor termine 
 
 
 class LiveAssistant:
-    def __init__(self, provider: LLMProvider, bus: EventBus, course: str, interval_min: int = 10,
-                 max_calls: int = 12, enabled: bool = True,
-                 clock: Callable[[], float] = time.monotonic) -> None:
+    def __init__(
+        self,
+        provider: LLMProvider,
+        bus: EventBus,
+        course: str,
+        interval_min: int = 10,
+        max_calls: int = 12,
+        enabled: bool = True,
+        clock: Callable[[], float] = time.monotonic,
+    ) -> None:
         self.provider = provider
         self.bus = bus
         self.course = course
@@ -103,16 +116,27 @@ class LiveAssistant:
         try:
             req = LLMRequest(
                 system=LIVE_SYSTEM,
-                messages=[LLMMessage("user", f"Curso: {self.course}\nEstado: {self._state()}\n"
-                                             f"Fragmento nuevo:\n{compact_transcript(batch)}")],
-                max_tokens=1500, tier="economico",
+                messages=[
+                    LLMMessage(
+                        "user",
+                        f"Curso: {self.course}\nEstado: {self._state()}\n"
+                        f"Fragmento nuevo:\n{compact_transcript(batch)}",
+                    )
+                ],
+                max_tokens=1500,
+                tier="economico",
             )
             result, resp = structured_with_retry(self.provider, req, ChunkInsights)
             self.calls += 1
             self.tokens += resp.usage.total
             self.insights.append(result)
-            self.bus.emit("insights", insights=result, calls=self.calls, tokens=self.tokens,
-                          start=batch[0].start if batch else 0.0)
+            self.bus.emit(
+                "insights",
+                insights=result,
+                calls=self.calls,
+                tokens=self.tokens,
+                start=batch[0].start if batch else 0.0,
+            )
         except LLMBudgetExceededError as exc:
             self.paused_reason = str(exc)
             self.bus.emit("live_paused", reason=self.paused_reason)

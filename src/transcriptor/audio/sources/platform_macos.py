@@ -76,14 +76,14 @@ def _make_output_class() -> Any:
     SCStreamDelegate = objc.protocolNamed("SCStreamDelegate")
 
     class _AudioOutput(NSObject, protocols=[SCStreamOutput, SCStreamDelegate]):  # type: ignore[misc,call-arg]
-        def initWithSource_(self, source: Any) -> Any:  # noqa: N802
+        def initWithSource_(self, source: Any) -> Any:
             self = objc.super(_AudioOutput, self).init()
             if self is None:
                 return None
             self.source = source
             return self
 
-        def stream_didOutputSampleBuffer_ofType_(self, stream: Any, buffer: Any, kind: int) -> None:  # noqa: N802
+        def stream_didOutputSampleBuffer_ofType_(self, stream: Any, buffer: Any, kind: int) -> None:
             if kind != SC_STREAM_OUTPUT_TYPE_AUDIO:
                 return
             try:
@@ -100,7 +100,7 @@ def _make_output_class() -> Any:
             except Exception:
                 log.exception("Error convirtiendo audio de ScreenCaptureKit")
 
-        def stream_didStopWithError_(self, stream: Any, error: Any) -> None:  # noqa: N802
+        def stream_didStopWithError_(self, stream: Any, error: Any) -> None:
             self.source._mark_lost(str(error))
 
     return _AudioOutput
@@ -133,11 +133,17 @@ class ScreenCaptureSource(AudioSource):
             target = [a for a in content.applications() if str(a.bundleIdentifier()) == self.app.id]
             if not target:
                 raise SourceUnavailableError(f"«{self.app.name}» no está abierta.")
-            flt = SCK.SCContentFilter.alloc().initWithDisplay_includingApplications_exceptingWindows_(
-                display, target, [])
+            flt = (
+                SCK.SCContentFilter.alloc().initWithDisplay_includingApplications_exceptingWindows_(
+                    display, target, []
+                )
+            )
         else:
-            flt = SCK.SCContentFilter.alloc().initWithDisplay_excludingApplications_exceptingWindows_(
-                display, [], [])
+            flt = (
+                SCK.SCContentFilter.alloc().initWithDisplay_excludingApplications_exceptingWindows_(
+                    display, [], []
+                )
+            )
 
         config = SCK.SCStreamConfiguration.alloc().init()
         config.setCapturesAudio_(True)
@@ -150,10 +156,13 @@ class ScreenCaptureSource(AudioSource):
         if _OUTPUT_CLASS is None:
             _OUTPUT_CLASS = _make_output_class()
         self._output = _OUTPUT_CLASS.alloc().initWithSource_(self)
-        self._stream = SCK.SCStream.alloc().initWithFilter_configuration_delegate_(flt, config, self._output)
+        self._stream = SCK.SCStream.alloc().initWithFilter_configuration_delegate_(
+            flt, config, self._output
+        )
         queue = dispatch.dispatch_queue_create(b"transcriptor.audio", None)
         ok, err = self._stream.addStreamOutput_type_sampleHandlerQueue_error_(
-            self._output, SC_STREAM_OUTPUT_TYPE_AUDIO, queue, None)
+            self._output, SC_STREAM_OUTPUT_TYPE_AUDIO, queue, None
+        )
         if not ok:
             raise SourceUnavailableError(f"No se pudo iniciar la captura: {err}")
 

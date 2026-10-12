@@ -35,8 +35,14 @@ class SpeakerProfileStore:
             return False
         return bool(json.loads(meta.read_text(encoding="utf-8")).get("confirmed", False))
 
-    def update(self, course_id: str, embedder: str, embedding: np.ndarray,
-               weight: int = 1, confirmed: bool | None = None) -> np.ndarray:
+    def update(
+        self,
+        course_id: str,
+        embedder: str,
+        embedding: np.ndarray,
+        weight: int = 1,
+        confirmed: bool | None = None,
+    ) -> np.ndarray:
         """Media móvil ponderada: el perfil mejora con cada clase."""
         vec_path, meta_path = self._paths(course_id, embedder)
         current = self.get(course_id, embedder)
@@ -53,7 +59,9 @@ class SpeakerProfileStore:
         meta_path.write_text(json.dumps(meta), encoding="utf-8")
         return new
 
-    def replace(self, course_id: str, embedder: str, embedding: np.ndarray, confirmed: bool = True) -> None:
+    def replace(
+        self, course_id: str, embedder: str, embedding: np.ndarray, confirmed: bool = True
+    ) -> None:
         self.delete(course_id)
         self.update(course_id, embedder, embedding, confirmed=confirmed)
 

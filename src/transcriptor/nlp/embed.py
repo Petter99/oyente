@@ -46,7 +46,9 @@ class HashingEmbedder:
         for g in grams:
             h = int.from_bytes(hashlib.blake2b(g.encode(), digest_size=4).digest(), "little")
             idx = h % self.dim
-            feats[idx] = feats.get(idx, 0.0) + (1.0 if h & 0x80000000 else -1.0) * (2.0 if g.startswith("w:") else 1.0)
+            feats[idx] = feats.get(idx, 0.0) + (1.0 if h & 0x80000000 else -1.0) * (
+                2.0 if g.startswith("w:") else 1.0
+            )
         return feats
 
     def embed(self, texts: list[str]) -> np.ndarray:

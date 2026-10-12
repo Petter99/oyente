@@ -67,14 +67,20 @@ class TabCaptureHub:
                 log.exception("Error en oyente del puente de captura")
 
     # ------------------------------------------------------------------ validación
-    def allowed(self, client_host: str | None, origin: str | None, token: str | None,
-                require_token: bool = True) -> bool:
+    def allowed(
+        self,
+        client_host: str | None,
+        origin: str | None,
+        token: str | None,
+        require_token: bool = True,
+    ) -> bool:
         if (client_host or "") not in LOCAL_HOSTS:
             return False
         origin = origin or ""
         from_page = origin in (f"http://127.0.0.1:{self.port}", f"http://localhost:{self.port}", "")
         from_ext = origin.startswith("chrome-extension://") and (
-            not EXTENSION_IDS or origin.split("//", 1)[1].strip("/") in EXTENSION_IDS)
+            not EXTENSION_IDS or origin.split("//", 1)[1].strip("/") in EXTENSION_IDS
+        )
         if not (from_page or from_ext):
             return False
         if require_token and not from_ext:
@@ -89,10 +95,18 @@ class TabCaptureHub:
             return
         kind = msg.get("type")
         if kind == "hello" and via == "extension":
-            self.extension = ExtensionInfo(True, str(msg.get("version", "")), str(msg.get("browser", "")))
-            self.emit("extension", connected=True, version=self.extension.version,
-                      outdated=bool(self.expected_extension_version
-                                    and self.extension.version != self.expected_extension_version))
+            self.extension = ExtensionInfo(
+                True, str(msg.get("version", "")), str(msg.get("browser", ""))
+            )
+            self.emit(
+                "extension",
+                connected=True,
+                version=self.extension.version,
+                outdated=bool(
+                    self.expected_extension_version
+                    and self.extension.version != self.expected_extension_version
+                ),
+            )
         elif kind == "start":
             with self._lock:
                 src = self.source

@@ -19,7 +19,12 @@ from transcriptor.asr.base import Segment, format_ts
 from transcriptor.config.models import AppConfig
 from transcriptor.filenames import safe_filename, slug
 from transcriptor.fsutil import atomic_write_text
-from transcriptor.notes.markdown import render_frontmatter, replace_block, set_properties, wrap_block
+from transcriptor.notes.markdown import (
+    render_frontmatter,
+    replace_block,
+    set_properties,
+    wrap_block,
+)
 from transcriptor.session.models import ClassSummary, RecordingSession, TaskItem
 
 TRANSCRIPT_DIR = ".transcriptor"
@@ -53,7 +58,9 @@ class VaultLayout:
         return self.root / self.teachers / f"{safe_filename(teacher)}.md"
 
     def transcript_dir(self, course: str, session: RecordingSession) -> Path:
-        return self.course_dir(course) / TRANSCRIPT_DIR / session.started_at.strftime("%Y-%m-%d_%H%M")
+        return (
+            self.course_dir(course) / TRANSCRIPT_DIR / session.started_at.strftime("%Y-%m-%d_%H%M")
+        )
 
     def rel(self, path: Path) -> str:
         """Ruta relativa a la bóveda, sin .md, con / (para enlaces de Obsidian)."""
@@ -62,10 +69,19 @@ class VaultLayout:
 
 def _env() -> jinja2.Environment:
     loader = jinja2.FunctionLoader(
-        lambda name: resources.files("transcriptor.notes").joinpath("templates", name).read_text(encoding="utf-8")
+        lambda name: (
+            resources.files("transcriptor.notes")
+            .joinpath("templates", name)
+            .read_text(encoding="utf-8")
+        )
     )
-    env = jinja2.Environment(loader=loader, autoescape=False, keep_trailing_newline=True,
-                             trim_blocks=True, lstrip_blocks=True)
+    env = jinja2.Environment(
+        loader=loader,
+        autoescape=False,
+        keep_trailing_newline=True,
+        trim_blocks=True,
+        lstrip_blocks=True,
+    )
     env.globals["block"] = wrap_block
     return env
 
@@ -93,7 +109,10 @@ def nearest_block(segments: list[Segment], t: float | None) -> float | None:
     """Ajusta un minuto al inicio del segmento que lo contiene (para que el enlace funcione)."""
     if t is None or not segments:
         return t
-    best = min(segments, key=lambda s: 0 if s.start <= t <= s.end else min(abs(s.start - t), abs(s.end - t)))
+    best = min(
+        segments,
+        key=lambda s: 0 if s.start <= t <= s.end else min(abs(s.start - t), abs(s.end - t)),
+    )
     return best.start
 
 
@@ -106,7 +125,11 @@ def transcript_markdown(segments: list[Segment], low_confidence: float) -> tuple
             for w in seg.words:
                 token = w.text
                 stripped = token.strip()
-                if stripped and w.probability < low_confidence and any(c.isalnum() for c in stripped):
+                if (
+                    stripped
+                    and w.probability < low_confidence
+                    and any(c.isalnum() for c in stripped)
+                ):
                     lead = token[: len(token) - len(token.lstrip())]
                     token = f"{lead}=={stripped}=="
                     doubtful += 1
@@ -145,15 +168,19 @@ def summary_markdown(summary: ClassSummary | None, llm_processed: bool) -> str:
         body = "\n".join(f"> {line}" if line else ">" for line in summary.summary.splitlines())
         return f"> [!summary] Resumen\n{body}"
     if not llm_processed:
-        return ("> [!note] Resumen pendiente\n> Esta clase se procesó en modo local (sin IA). "
-                "Agrega una API key en Configuración → IA y usa «Procesar clases pendientes».")
+        return (
+            "> [!note] Resumen pendiente\n> Esta clase se procesó en modo local (sin IA). "
+            "Agrega una API key en Configuración → IA y usa «Procesar clases pendientes»."
+        )
     return ""
 
 
 def key_points_markdown(summary: ClassSummary | None, segments: list[Segment]) -> str:
     if not summary or not summary.key_points:
         return ""
-    return "\n".join(f"- {kp.text}{ts_link(nearest_block(segments, kp.t))}" for kp in summary.key_points)
+    return "\n".join(
+        f"- {kp.text}{ts_link(nearest_block(segments, kp.t))}" for kp in summary.key_points
+    )
 
 
 def tasks_markdown(tasks: list[TaskItem], segments: list[Segment]) -> str:
@@ -164,7 +191,9 @@ def tasks_markdown(tasks: list[TaskItem], segments: list[Segment]) -> str:
         copy = task.model_copy(update={"t": nearest_block(segments, task.t)})
         lines.append(task_line(copy))
     if any(not t.confirmed for t in tasks):
-        lines.append("\n> [!info] Las tareas marcadas #a-confirmar se detectaron sin IA; revísalas.")
+        lines.append(
+            "\n> [!info] Las tareas marcadas #a-confirmar se detectaron sin IA; revísalas."
+        )
     return "\n".join(lines)
 
 
@@ -190,7 +219,11 @@ class NoteWriter:
     def class_note_path(self, session: RecordingSession) -> Path:
         if session.note_path:
             return self.layout.root / session.note_path
-        title = session.summary.title if session.summary and session.summary.title else session.course_name
+        title = (
+            session.summary.title
+            if session.summary and session.summary.title
+            else session.course_name
+        )
         base = f"{session.day.isoformat()} {title}"
         folder = self.layout.course_dir(session.course_name)
         candidate = folder / f"{safe_filename(base)}.md"
@@ -203,8 +236,10 @@ class NoteWriter:
     def write_transcript_files(self, session: RecordingSession, segments: list[Segment]) -> Path:
         folder = self.layout.transcript_dir(session.course_name, session)
         atomic_write_text(folder / "transcripcion.txt", transcript_text(segments))
-        atomic_write_text(folder / "segmentos.json",
-                          json.dumps([s.to_dict() for s in segments], ensure_ascii=False))
+        atomic_write_text(
+            folder / "segmentos.json",
+            json.dumps([s.to_dict() for s in segments], ensure_ascii=False),
+        )
         session.transcript_dir = folder.relative_to(self.layout.root).as_posix()
         return folder
 
@@ -212,7 +247,9 @@ class NoteWriter:
         s = data.session
         summary = s.summary
         tasks = summary.tasks if summary else []
-        course_link = f"[[{self.layout.rel(self.layout.course_note(s.course_name))}|{s.course_name}]]"
+        course_link = (
+            f"[[{self.layout.rel(self.layout.course_note(s.course_name))}|{s.course_name}]]"
+        )
         return {
             "tipo": "clase",
             "transcriptor_id": s.id,
@@ -236,10 +273,14 @@ class NoteWriter:
 
     def render_class(self, data: ClassNoteData) -> str:
         s = data.session
-        transcript_md, doubtful = transcript_markdown(data.segments, self.cfg.transcription.low_confidence)
+        transcript_md, doubtful = transcript_markdown(
+            data.segments, self.cfg.transcription.low_confidence
+        )
         s.low_confidence_words = doubtful
         summary = s.summary
-        markers = "\n".join(f"- {m.label}{ts_link(nearest_block(data.segments, m.t))}" for m in s.markers)
+        markers = "\n".join(
+            f"- {m.label}{ts_link(nearest_block(data.segments, m.t))}" for m in s.markers
+        )
         return self.env.get_template("clase.md.j2").render(
             frontmatter=render_frontmatter(self.frontmatter(data)).rstrip("\n"),
             title=s.title,
@@ -267,15 +308,30 @@ class NoteWriter:
         text, mtime = read_text(path)
         s = data.session
         summary = s.summary
-        text = set_properties(text, {
-            k: v for k, v in self.frontmatter(data).items()
-            if k not in {"revisado", "aliases", "tags"}
-        })
+        text = set_properties(
+            text,
+            {
+                k: v
+                for k, v in self.frontmatter(data).items()
+                if k not in {"revisado", "aliases", "tags"}
+            },
+        )
         text = replace_block(text, "navegacion", data.navigation)
-        text = replace_block(text, "resumen", summary_markdown(summary, s.llm_processed), "## Resumen")
-        text = replace_block(text, "puntos", key_points_markdown(summary, data.segments), "## Puntos importantes")
-        text = replace_block(text, "tareas", tasks_markdown(summary.tasks if summary else [], data.segments), "## Tareas")
-        text = replace_block(text, "temas", "\n".join(f"- {t}" for t in data.topics_links), "## Temas de interés")
+        text = replace_block(
+            text, "resumen", summary_markdown(summary, s.llm_processed), "## Resumen"
+        )
+        text = replace_block(
+            text, "puntos", key_points_markdown(summary, data.segments), "## Puntos importantes"
+        )
+        text = replace_block(
+            text,
+            "tareas",
+            tasks_markdown(summary.tasks if summary else [], data.segments),
+            "## Tareas",
+        )
+        text = replace_block(
+            text, "temas", "\n".join(f"- {t}" for t in data.topics_links), "## Temas de interés"
+        )
         text = replace_block(text, "relacionado", data.related_md, "## Relacionado")
         atomic_write_text(path, text, expected_mtime=mtime)
 

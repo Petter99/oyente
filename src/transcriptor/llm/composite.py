@@ -41,16 +41,25 @@ class NullLLMProvider:
         return 0
 
 
-def structured_with_retry(provider: LLMProvider, req: LLMRequest, schema: type[T]) -> tuple[T, LLMResponse]:
+def structured_with_retry(
+    provider: LLMProvider, req: LLMRequest, schema: type[T]
+) -> tuple[T, LLMResponse]:
     """Un reintento con el error de validación antes de rendirse."""
     try:
         return provider.generate_structured(req, schema)
     except LLMInvalidOutputError as exc:
         retry = LLMRequest(
             system=req.system,
-            messages=[*req.messages, LLMMessage(
-                "user", f"Tu respuesta anterior no cumplía el formato ({exc}). Responde solo el JSON válido.")],
-            max_tokens=req.max_tokens, tier=req.tier, cache_system=req.cache_system,
+            messages=[
+                *req.messages,
+                LLMMessage(
+                    "user",
+                    f"Tu respuesta anterior no cumplía el formato ({exc}). Responde solo el JSON válido.",
+                ),
+            ],
+            max_tokens=req.max_tokens,
+            tier=req.tier,
+            cache_system=req.cache_system,
         )
         return provider.generate_structured(retry, schema)
 
@@ -83,7 +92,9 @@ class FallbackProvider:
             except LLMError as exc:
                 self.last_error = exc
                 errors.append(f"{p.name}: {exc}")
-                log.warning("Proveedor %s falló (%s); probando respaldo", p.name, type(exc).__name__)
+                log.warning(
+                    "Proveedor %s falló (%s); probando respaldo", p.name, type(exc).__name__
+                )
                 if not exc.retry_other:
                     raise
         raise LLMUnavailableError("; ".join(errors) or "No hay proveedor de IA disponible")
@@ -152,7 +163,8 @@ class BudgetedProvider:
     def _check(self, req: LLMRequest) -> None:
         if self.limit is not None and self.ledger.used() + request_tokens(req) > self.limit:
             raise LLMBudgetExceededError(
-                "Llegaste al límite de tokens del mes; la app sigue en modo local.")
+                "Llegaste al límite de tokens del mes; la app sigue en modo local."
+            )
 
     def generate(self, req: LLMRequest) -> LLMResponse:
         self._check(req)

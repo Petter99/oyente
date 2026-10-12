@@ -19,12 +19,18 @@ class PulseMonitorSource(AudioSource):
     def _open(self) -> None:
         import sounddevice as sd
 
-        monitors = [i for i, d in enumerate(sd.query_devices())
-                    if "monitor" in d["name"].lower() and d["max_input_channels"] > 0]
+        monitors = [
+            i
+            for i, d in enumerate(sd.query_devices())
+            if "monitor" in d["name"].lower() and d["max_input_channels"] > 0
+        ]
         if not monitors:
-            raise SourceUnavailableError("No se encontró un dispositivo «monitor» de PulseAudio/PipeWire.")
-        self._stream = sd.InputStream(device=monitors[0], channels=1, samplerate=self.RATE,
-                                      dtype="float32", callback=self._cb)
+            raise SourceUnavailableError(
+                "No se encontró un dispositivo «monitor» de PulseAudio/PipeWire."
+            )
+        self._stream = sd.InputStream(
+            device=monitors[0], channels=1, samplerate=self.RATE, dtype="float32", callback=self._cb
+        )
         self._stream.start()
 
     def _cb(self, indata: np.ndarray, frames: int, time: Any, status: Any) -> None:

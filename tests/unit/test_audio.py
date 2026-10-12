@@ -13,8 +13,8 @@ from pathlib import Path
 import numpy as np
 import pytest
 import soundfile as sf
-
 from tests.synth import ESTUDIANTE, PROFESOR, conversation, silence, speech
+
 from transcriptor.audio.decode import decode_file, encode_opus, estimate_mb
 from transcriptor.audio.recorder import ChannelRecorder
 from transcriptor.audio.retention import delete_now, finalize_audio, keep_forever, sweep_expired
@@ -44,9 +44,13 @@ def test_t2_1_file_source_feeds_blocks() -> None:
     assert src.level_db > -60
 
 
-@pytest.mark.parametrize("detector", [EnergyDetector(), SileroDetector()], ids=["energia", "silero"])
+@pytest.mark.parametrize(
+    "detector", [EnergyDetector(), SileroDetector()], ids=["energia", "silero"]
+)
 def test_t2_2_vad_segments_conversation(detector: object) -> None:
-    turns = [(PROFESOR, 3.0), (ESTUDIANTE, 1.5), (PROFESOR, 2.5), (ESTUDIANTE, 2.0)] * 2 + [(PROFESOR, 2.0)]
+    turns = [(PROFESOR, 3.0), (ESTUDIANTE, 1.5), (PROFESOR, 2.5), (ESTUDIANTE, 2.0)] * 2 + [
+        (PROFESOR, 2.0)
+    ]
     audio, truth = conversation(turns, pause=1.0)
     seg = StreamingSegmenter("clase", detector)  # type: ignore[arg-type]
     utts = []
@@ -112,10 +116,17 @@ def test_t2_4_retention_never_keeps_audio_if_final_pass_failed(tmp_path: Path) -
 
 
 def test_t2_4_retention_days_expires(tmp_path: Path) -> None:
-    files = [_make_flac(tmp_path / "s1" / "clase.flac") if (tmp_path / "s1").mkdir() is None else None]
+    files = [
+        _make_flac(tmp_path / "s1" / "clase.flac") if (tmp_path / "s1").mkdir() is None else None
+    ]
     now = datetime(2026, 10, 12, 18, 0)
-    res = finalize_audio([f for f in files if f], "flac", RetentionConfig(mode="days", days=30),
-                         final_pass_ok=True, now=now)
+    res = finalize_audio(
+        [f for f in files if f],
+        "flac",
+        RetentionConfig(mode="days", days=30),
+        final_pass_ok=True,
+        now=now,
+    )
     assert res.expires_at == now + timedelta(days=30)
     assert sweep_expired(tmp_path, now=now + timedelta(days=29)) == []
     removed = sweep_expired(tmp_path, now=now + timedelta(days=31))
@@ -124,8 +135,9 @@ def test_t2_4_retention_days_expires(tmp_path: Path) -> None:
 
 def test_t2_4_keep_forever_and_delete_now(tmp_path: Path) -> None:
     f = _make_flac(tmp_path / "clase.flac")
-    finalize_audio([f], "flac", RetentionConfig(mode="days", days=1), True,
-                   now=datetime(2026, 1, 1))
+    finalize_audio(
+        [f], "flac", RetentionConfig(mode="days", days=1), True, now=datetime(2026, 1, 1)
+    )
     keep_forever(tmp_path)
     assert sweep_expired(tmp_path, now=datetime(2027, 1, 1)) == []
     assert delete_now(tmp_path) == [f]

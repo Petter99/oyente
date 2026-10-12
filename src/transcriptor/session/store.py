@@ -33,11 +33,13 @@ class SessionStore:
             return None
         return RecordingSession.model_validate_json(path.read_text(encoding="utf-8"))
 
-    def list(self) -> list[RecordingSession]:
+    def all(self) -> list[RecordingSession]:
         sessions = []
         for path in self.root.glob("*/session.json"):
             try:
-                sessions.append(RecordingSession.model_validate_json(path.read_text(encoding="utf-8")))
+                sessions.append(
+                    RecordingSession.model_validate_json(path.read_text(encoding="utf-8"))
+                )
             except Exception:
                 log.exception("Sesión ilegible: %s", path)
         return sorted(sessions, key=lambda s: s.started_at, reverse=True)
@@ -61,4 +63,4 @@ class SessionStore:
 
     def interrupted(self) -> list[RecordingSession]:
         """Sesiones que quedaron grabando (cierre abrupto) y deben recuperarse."""
-        return [s for s in self.list() if s.status in ("recording", "finalizing")]
+        return [s for s in self.all() if s.status in ("recording", "finalizing")]

@@ -6,8 +6,8 @@ from datetime import date
 from pathlib import Path
 
 import pytest
-
 from tests.fakes import FakeLLM
+
 from transcriptor.chat.service import ChatService
 from transcriptor.llm.composite import NullLLMProvider
 from transcriptor.nlp.embed import HashingEmbedder
@@ -18,21 +18,56 @@ from transcriptor.session.models import TaskItem
 @pytest.fixture
 def index(tmp_path: Path) -> SearchIndex:
     idx = SearchIndex(tmp_path / "i.sqlite", HashingEmbedder())
-    idx.upsert_note(path="Clases/Cálculo II/2026-10-12 Integración.md", title="2026-10-12 Integración",
-                    kind="clase", owned=True, mtime=1, course="Cálculo II", day="2026-10-12",
-                    summary="Integración por partes y la regla LIATE",
-                    chunks=[("resumen", None, None, "Se explicó la integración por partes usando la regla LIATE."),
-                            ("transcripcion", 872.0, "Profesor",
-                             "La regla LIATE nos dice que primero se eligen los logaritmos como u.")])
-    idx.upsert_note(path="Clases/Física I/2026-10-08 Newton.md", title="2026-10-08 Newton",
-                    kind="clase", owned=True, mtime=1, course="Física I", day="2026-10-08",
-                    summary="Leyes de Newton",
-                    chunks=[("resumen", None, None, "Se vieron las tres leyes de Newton y la fuerza neta."),
-                            ("transcripcion", 300.0, "Profesor", "La segunda ley dice que fuerza es masa por aceleración.")])
-    idx.upsert_tasks([TaskItem(description="Hoja 4", due=date(2026, 10, 15), t=900.0)],
-                     session_id="s1", course="Cálculo II", note_path="Clases/Cálculo II/2026-10-12 Integración.md")
-    idx.upsert_tasks([TaskItem(description="Informe de laboratorio", due=date(2026, 10, 30), confirmed=False)],
-                     session_id="s2", course="Física I", note_path="Clases/Física I/2026-10-08 Newton.md")
+    idx.upsert_note(
+        path="Clases/Cálculo II/2026-10-12 Integración.md",
+        title="2026-10-12 Integración",
+        kind="clase",
+        owned=True,
+        mtime=1,
+        course="Cálculo II",
+        day="2026-10-12",
+        summary="Integración por partes y la regla LIATE",
+        chunks=[
+            ("resumen", None, None, "Se explicó la integración por partes usando la regla LIATE."),
+            (
+                "transcripcion",
+                872.0,
+                "Profesor",
+                "La regla LIATE nos dice que primero se eligen los logaritmos como u.",
+            ),
+        ],
+    )
+    idx.upsert_note(
+        path="Clases/Física I/2026-10-08 Newton.md",
+        title="2026-10-08 Newton",
+        kind="clase",
+        owned=True,
+        mtime=1,
+        course="Física I",
+        day="2026-10-08",
+        summary="Leyes de Newton",
+        chunks=[
+            ("resumen", None, None, "Se vieron las tres leyes de Newton y la fuerza neta."),
+            (
+                "transcripcion",
+                300.0,
+                "Profesor",
+                "La segunda ley dice que fuerza es masa por aceleración.",
+            ),
+        ],
+    )
+    idx.upsert_tasks(
+        [TaskItem(description="Hoja 4", due=date(2026, 10, 15), t=900.0)],
+        session_id="s1",
+        course="Cálculo II",
+        note_path="Clases/Cálculo II/2026-10-12 Integración.md",
+    )
+    idx.upsert_tasks(
+        [TaskItem(description="Informe de laboratorio", due=date(2026, 10, 30), confirmed=False)],
+        session_id="s2",
+        course="Física I",
+        note_path="Clases/Física I/2026-10-08 Newton.md",
+    )
     return idx
 
 

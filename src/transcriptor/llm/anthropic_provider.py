@@ -82,7 +82,8 @@ class AnthropicProvider:
             if self._server_fallback_ok and params["model"] in SERVER_FALLBACK_MODELS:
                 try:
                     return self.client.beta.messages.create(
-                        **params, betas=[FALLBACK_BETA], fallbacks="default")
+                        **params, betas=[FALLBACK_BETA], fallbacks="default"
+                    )
                 except anthropic.BadRequestError as exc:
                     if "fallback" not in str(exc).lower():
                         raise
@@ -127,8 +128,10 @@ class AnthropicProvider:
 
     def generate_structured(self, req: LLMRequest, schema: type[T]) -> tuple[T, LLMResponse]:
         params = self._params(req)
-        params["output_config"] = {**params["output_config"],
-                                   "format": {"type": "json_schema", "schema": strict_schema(schema)}}
+        params["output_config"] = {
+            **params["output_config"],
+            "format": {"type": "json_schema", "schema": strict_schema(schema)},
+        }
         resp = self._to_response(self._call(params))
         return parse_json_output(resp.text, schema), resp
 
@@ -136,7 +139,8 @@ class AnthropicProvider:
         params = self._params(req)
         try:
             res = self.client.messages.count_tokens(
-                model=params["model"], system=params["system"], messages=params["messages"])
+                model=params["model"], system=params["system"], messages=params["messages"]
+            )
             return int(res.input_tokens)
         except anthropic.APIError as exc:
             raise LLMUnavailableError(str(exc)) from exc
@@ -146,8 +150,10 @@ class AnthropicProvider:
         requests = []
         for custom_id, req, schema in items:
             params = self._params(req)
-            params["output_config"] = {**params["output_config"],
-                                       "format": {"type": "json_schema", "schema": strict_schema(schema)}}
+            params["output_config"] = {
+                **params["output_config"],
+                "format": {"type": "json_schema", "schema": strict_schema(schema)},
+            }
             requests.append({"custom_id": custom_id, "params": params})
         try:
             batch = self.client.messages.batches.create(requests=requests)
@@ -158,7 +164,9 @@ class AnthropicProvider:
     def batch_status(self, batch_id: str) -> str:
         return str(self.client.messages.batches.retrieve(batch_id).processing_status)
 
-    def batch_results(self, batch_id: str, schema: type[T]) -> dict[str, tuple[T | None, LLMResponse | None]]:
+    def batch_results(
+        self, batch_id: str, schema: type[T]
+    ) -> dict[str, tuple[T | None, LLMResponse | None]]:
         out: dict[str, tuple[T | None, LLMResponse | None]] = {}
         for entry in self.client.messages.batches.results(batch_id):
             if entry.result.type != "succeeded":

@@ -16,15 +16,21 @@ log = logging.getLogger(__name__)
 
 
 def _static(name: str) -> str:
-    return resources.files("transcriptor.capture_web").joinpath("static", name).read_text(encoding="utf-8")
+    return (
+        resources.files("transcriptor.capture_web")
+        .joinpath("static", name)
+        .read_text(encoding="utf-8")
+    )
 
 
 def register(app: FastAPI | Any, hub: TabCaptureHub) -> None:
     @app.get("/captura", response_class=HTMLResponse)
     def capture_page(token: str = "") -> Response:
         if token != hub.token:
-            return PlainTextResponse("Enlace de captura vencido. Vuelve a la app y pulsa «Elegir pestaña».",
-                                     status_code=403)
+            return PlainTextResponse(
+                "Enlace de captura vencido. Vuelve a la app y pulsa «Elegir pestaña».",
+                status_code=403,
+            )
         html = _static("captura.html").replace("{{NOMBRE}}", branding().nombre)
         return HTMLResponse(html, headers={"Cache-Control": "no-store"})
 
@@ -62,7 +68,9 @@ def register(app: FastAPI | Any, hub: TabCaptureHub) -> None:
         """Canal de control de la extensión: solo para detectarla (no lleva audio)."""
         origin = ws.headers.get("origin")
         host = ws.client.host if ws.client else None
-        if not (origin or "").startswith("chrome-extension://") or not hub.allowed(host, origin, None):
+        if not (origin or "").startswith("chrome-extension://") or not hub.allowed(
+            host, origin, None
+        ):
             await ws.close(code=4403)
             return
         await ws.accept()

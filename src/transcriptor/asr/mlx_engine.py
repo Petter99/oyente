@@ -46,11 +46,18 @@ class MlxWhisperTranscriber:
             )
         out = []
         for s in result.get("segments", []):
-            words = [Word(w["start"], w["end"], w["word"], w.get("probability", 1.0))
-                     for w in s.get("words", [])]
-            seg = Segment(start=s["start"], end=s["end"], text=s["text"].strip(), words=words,
-                          avg_logprob=s.get("avg_logprob", 0.0),
-                          no_speech_prob=s.get("no_speech_prob", 0.0))
+            words = [
+                Word(w["start"], w["end"], w["word"], w.get("probability", 1.0))
+                for w in s.get("words", [])
+            ]
+            seg = Segment(
+                start=s["start"],
+                end=s["end"],
+                text=s["text"].strip(),
+                words=words,
+                avg_logprob=s.get("avg_logprob", 0.0),
+                no_speech_prob=s.get("no_speech_prob", 0.0),
+            )
             if not is_hallucination(seg):
                 out.append(seg)
         return out

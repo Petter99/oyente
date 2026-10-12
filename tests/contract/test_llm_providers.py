@@ -32,9 +32,15 @@ from transcriptor.llm.ollama_provider import OllamaProvider
 from transcriptor.llm.schemas import LLMClassSummary
 
 MODELS = AIConfig().models
-SUMMARY = {"titulo": "Integrales", "resumen": "Se vio integración.", "puntos_clave": [],
-           "temas": ["Integración por partes"],
-           "tareas": [{"descripcion": "Hoja 4", "fecha_texto": "el jueves", "tipo": "tarea", "minuto": ""}]}
+SUMMARY = {
+    "titulo": "Integrales",
+    "resumen": "Se vio integración.",
+    "puntos_clave": [],
+    "temas": ["Integración por partes"],
+    "tareas": [
+        {"descripcion": "Hoja 4", "fecha_texto": "el jueves", "tipo": "tarea", "minuto": ""}
+    ],
+}
 REQ = LLMRequest(system="sistema fijo", messages=[LLMMessage("user", "hola")], max_tokens=500)
 
 
@@ -48,7 +54,9 @@ class FakeAnthropic:
     def __init__(self, scenario: Scenario) -> None:
         self.scenario = scenario
         self.last: dict[str, Any] = {}
-        self.messages = SimpleNamespace(create=self.create, count_tokens=lambda **k: SimpleNamespace(input_tokens=42))
+        self.messages = SimpleNamespace(
+            create=self.create, count_tokens=lambda **k: SimpleNamespace(input_tokens=42)
+        )
         self.beta = SimpleNamespace(messages=SimpleNamespace(create=self.create))
 
     def create(self, **params: Any) -> Any:
@@ -56,19 +64,31 @@ class FakeAnthropic:
         req = httpx.Request("POST", "https://api.anthropic.com/v1/messages")
         k = self.scenario.kind
         if k == "auth":
-            raise anthropic.AuthenticationError("bad key", response=httpx.Response(401, request=req), body=None)
+            raise anthropic.AuthenticationError(
+                "bad key", response=httpx.Response(401, request=req), body=None
+            )
         if k == "ratelimit":
-            raise anthropic.RateLimitError("slow", response=httpx.Response(429, request=req), body=None)
+            raise anthropic.RateLimitError(
+                "slow", response=httpx.Response(429, request=req), body=None
+            )
         if k == "network":
             raise anthropic.APIConnectionError(request=req)
-        text = {"ok": "hola", "json": json.dumps(SUMMARY), "badjson": "{no es json", "refusal": ""}[k]
+        text = {"ok": "hola", "json": json.dumps(SUMMARY), "badjson": "{no es json", "refusal": ""}[
+            k
+        ]
         return SimpleNamespace(
             stop_reason="refusal" if k == "refusal" else "end_turn",
-            stop_details=SimpleNamespace(category="cyber", explanation="x") if k == "refusal" else None,
+            stop_details=SimpleNamespace(category="cyber", explanation="x")
+            if k == "refusal"
+            else None,
             content=[SimpleNamespace(type="text", text=text)] if text else [],
             model=params["model"],
-            usage=SimpleNamespace(input_tokens=10, output_tokens=5, cache_read_input_tokens=100,
-                                  cache_creation_input_tokens=0),
+            usage=SimpleNamespace(
+                input_tokens=10,
+                output_tokens=5,
+                cache_read_input_tokens=100,
+                cache_creation_input_tokens=0,
+            ),
         )
 
 
@@ -81,8 +101,10 @@ class FakeGemini:
     def __init__(self, scenario: Scenario) -> None:
         self.scenario = scenario
         self.last: dict[str, Any] = {}
-        self.models = SimpleNamespace(generate_content=self.generate,
-                                      count_tokens=lambda **k: SimpleNamespace(total_tokens=42))
+        self.models = SimpleNamespace(
+            generate_content=self.generate,
+            count_tokens=lambda **k: SimpleNamespace(total_tokens=42),
+        )
 
     def generate(self, **params: Any) -> Any:
         self.last = params
@@ -93,12 +115,20 @@ class FakeGemini:
             raise gerrors.ClientError(429, {"error": {"message": "quota"}})
         if k == "network":
             raise httpx.ConnectError("sin red")
-        text = {"ok": "hola", "json": json.dumps(SUMMARY), "badjson": "{no es json", "refusal": ""}[k]
+        text = {"ok": "hola", "json": json.dumps(SUMMARY), "badjson": "{no es json", "refusal": ""}[
+            k
+        ]
         return SimpleNamespace(
-            text=text, prompt_feedback=None,
-            candidates=[SimpleNamespace(finish_reason=SimpleNamespace(value="SAFETY" if k == "refusal" else "STOP"))],
-            usage_metadata=SimpleNamespace(prompt_token_count=110, candidates_token_count=5,
-                                           cached_content_token_count=100),
+            text=text,
+            prompt_feedback=None,
+            candidates=[
+                SimpleNamespace(
+                    finish_reason=SimpleNamespace(value="SAFETY" if k == "refusal" else "STOP")
+                )
+            ],
+            usage_metadata=SimpleNamespace(
+                prompt_token_count=110, candidates_token_count=5, cached_content_token_count=100
+            ),
         )
 
 
@@ -117,14 +147,21 @@ def make_ollama(s: Scenario) -> Any:
         if k == "refusal":
             return httpx.Response(200, json={"message": {"content": "{}"}})
         text = {"ok": "hola", "json": json.dumps(SUMMARY), "badjson": "{no es json"}[k]
-        return httpx.Response(200, json={"message": {"content": text}, "prompt_eval_count": 10, "eval_count": 5})
+        return httpx.Response(
+            200, json={"message": {"content": text}, "prompt_eval_count": 10, "eval_count": 5}
+        )
 
-    return OllamaProvider("http://localhost:11434", MODELS["ollama"],
-                          client=httpx.Client(transport=httpx.MockTransport(handler)))
+    return OllamaProvider(
+        "http://localhost:11434",
+        MODELS["ollama"],
+        client=httpx.Client(transport=httpx.MockTransport(handler)),
+    )
 
 
 ADAPTERS: dict[str, Callable[[Scenario], Any]] = {
-    "anthropic": make_anthropic, "gemini": make_gemini, "ollama": make_ollama,
+    "anthropic": make_anthropic,
+    "gemini": make_gemini,
+    "ollama": make_ollama,
 }
 
 
@@ -162,11 +199,16 @@ def test_refusal_is_normalized(name: str) -> None:
         ADAPTERS[name](Scenario("refusal")).generate(REQ)
 
 
-@pytest.mark.parametrize(("name", "kind", "error"), [
-    ("anthropic", "auth", LLMAuthError), ("gemini", "auth", LLMAuthError),
-    ("anthropic", "ratelimit", LLMRateLimitError), ("gemini", "ratelimit", LLMRateLimitError),
-    ("ollama", "auth", LLMUnavailableError),
-])
+@pytest.mark.parametrize(
+    ("name", "kind", "error"),
+    [
+        ("anthropic", "auth", LLMAuthError),
+        ("gemini", "auth", LLMAuthError),
+        ("anthropic", "ratelimit", LLMRateLimitError),
+        ("gemini", "ratelimit", LLMRateLimitError),
+        ("ollama", "auth", LLMUnavailableError),
+    ],
+)
 def test_errors_are_normalized(name: str, kind: str, error: type) -> None:
     with pytest.raises(error):
         ADAPTERS[name](Scenario(kind)).generate(REQ)

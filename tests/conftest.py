@@ -10,6 +10,8 @@ import pytest
 from keyring.backend import KeyringBackend
 from keyring.errors import PasswordDeleteError
 
+pytest_plugins = ["nicegui.testing.user_plugin"]
+
 
 class MemoryKeyring(KeyringBackend):
     priority = 1  # type: ignore[assignment]

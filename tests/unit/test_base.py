@@ -49,8 +49,11 @@ def test_t1_1_corrupt_config_is_backed_up(tmp_path: Path) -> None:
 
 
 def test_t1_2_migration_v1_to_v2_keeps_user_settings() -> None:
-    v1 = {"version": 1, "audio": {"save_audio": False, "format": "flac"},
-          "courses": [{"name": "Física I"}]}
+    v1 = {
+        "version": 1,
+        "audio": {"save_audio": False, "format": "flac"},
+        "courses": [{"name": "Física I"}],
+    }
     cfg = AppConfig.model_validate(migrate(v1))
     assert cfg.audio.retention.mode == "never"
     assert cfg.audio.format == "flac"
@@ -94,8 +97,9 @@ def test_t1_4_log_filter_hides_secrets(text: str, secret: str) -> None:
 
 def test_t1_4_registered_secret_is_hidden_in_records() -> None:
     SecretStore().set(Secret.GEMINI_API_KEY, "valor-muy-secreto-42")
-    record = logging.LogRecord("x", logging.INFO, __file__, 1, "usando %s",
-                               ("valor-muy-secreto-42",), None)
+    record = logging.LogRecord(
+        "x", logging.INFO, __file__, 1, "usando %s", ("valor-muy-secreto-42",), None
+    )
     SecretFilter().filter(record)
     assert "valor-muy-secreto-42" not in record.getMessage()
 
@@ -154,9 +158,18 @@ def test_t1_8_brand_name_only_in_branding_file() -> None:
 
 
 def test_t1_8_renaming_changes_visible_strings() -> None:
-    b = load_branding({"nombre": "Otra", "nombre_corto": "Otra", "eslogan": "", "sitio_web": "",
-                       "soporte": "", "calendario_google": "Clases – {nombre}",
-                       "lista_tasks": "Tareas de clase", "ejecutable": "{nombre}"})
+    b = load_branding(
+        {
+            "nombre": "Otra",
+            "nombre_corto": "Otra",
+            "eslogan": "",
+            "sitio_web": "",
+            "soporte": "",
+            "calendario_google": "Clases – {nombre}",
+            "lista_tasks": "Tareas de clase",
+            "ejecutable": "{nombre}",
+        }
+    )
     assert b.calendario_google == "Clases – Otra"
     assert b.ejecutable == "Otra"
     assert b.fmt("Bienvenido a {nombre}") == "Bienvenido a Otra"

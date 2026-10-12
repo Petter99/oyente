@@ -32,8 +32,9 @@ TEXT = (
 def _say(text: str, path: Path, voice: str = "Paulina") -> Path:
     if not shutil.which("say"):
         pytest.skip("Requiere la voz del sistema de macOS")
-    subprocess.run(["say", "-v", voice, "-o", str(path), "--data-format=LEI16@16000", text],
-                   check=True)
+    subprocess.run(
+        ["say", "-v", voice, "-o", str(path), "--data-format=LEI16@16000", text], check=True
+    )
     return path
 
 
@@ -56,7 +57,9 @@ def test_t3_2_wer_small_model(tmp_path: Path, model: FasterWhisperTranscriber) -
 def test_t3_4_silence_produces_no_text(tmp_path: Path, model: FasterWhisperTranscriber) -> None:
     wav = tmp_path / "silencio.wav"
     rng = np.random.default_rng(0)
-    sf.write(str(wav), (0.001 * rng.standard_normal(SAMPLE_RATE * 60)).astype(np.float32), SAMPLE_RATE)
+    sf.write(
+        str(wav), (0.001 * rng.standard_normal(SAMPLE_RATE * 60)).astype(np.float32), SAMPLE_RATE
+    )
     segs = model.transcribe_file(wav, TranscribeOptions(language="es"))
     assert segs == []
 

@@ -67,15 +67,24 @@ class Finalizer:
         self.d.bus.emit("finalize_step", session_id=session.id, step=name)
 
     # ------------------------------------------------------------------ principal
-    def run(self, session: RecordingSession, course: Course, live_segments: list[Segment],
-            audio_files: list[Path], partials: list[ChunkInsights] | None = None) -> RecordingSession:
+    def run(
+        self,
+        session: RecordingSession,
+        course: Course,
+        live_segments: list[Segment],
+        audio_files: list[Path],
+        partials: list[ChunkInsights] | None = None,
+    ) -> RecordingSession:
         cfg = self.d.cfg
         session.status = "finalizing"
         session.ended_at = session.ended_at or datetime.now()
         self.d.store.save_segments(session.id, live_segments, "live")
         self.d.store.save(session)
-        opts = TranscribeOptions(language=course.language or cfg.transcription.language,
-                                 beam_size=cfg.transcription.beam_size, glossary=tuple(course.glossary))
+        opts = TranscribeOptions(
+            language=course.language or cfg.transcription.language,
+            beam_size=cfg.transcription.beam_size,
+            glossary=tuple(course.glossary),
+        )
 
         self._step(session, "Pasada final de transcripción")
         segments = self.final_pass(session, audio_files, opts, live_segments)
@@ -88,7 +97,9 @@ class Finalizer:
         self.writer.write_transcript_files(session, segments)
 
         self._step(session, "Extrayendo resumen, tareas y temas")
-        summary, used_llm = self.d.postprocessor.summarize(segments, session.day, course.name, partials)
+        summary, used_llm = self.d.postprocessor.summarize(
+            segments, session.day, course.name, partials
+        )
         session.summary = summary
         session.llm_processed = used_llm
         session.llm_tokens += self.d.postprocessor.tokens_used
@@ -102,14 +113,22 @@ class Finalizer:
 
         session.status = "done"
         self.d.store.save(session)
-        self.d.bus.emit("session_done", session_id=session.id,
-                        tasks=[t for t in summary.tasks if t.due or t.confirmed],
-                        needs_teacher=session.teacher_needs_confirmation)
+        self.d.bus.emit(
+            "session_done",
+            session_id=session.id,
+            tasks=[t for t in summary.tasks if t.due or t.confirmed],
+            needs_teacher=session.teacher_needs_confirmation,
+        )
         return session
 
     # ------------------------------------------------------------------ pasos
-    def final_pass(self, session: RecordingSession, audio_files: list[Path], opts: TranscribeOptions,
-                   live_segments: list[Segment]) -> list[Segment]:
+    def final_pass(
+        self,
+        session: RecordingSession,
+        audio_files: list[Path],
+        opts: TranscribeOptions,
+        live_segments: list[Segment],
+    ) -> list[Segment]:
         segments: list[Segment] = []
         try:
             for path in audio_files:
@@ -130,8 +149,13 @@ class Finalizer:
             session.final_pass_ok = False
             return list(live_segments)
 
-    def identify_speakers(self, session: RecordingSession, course: Course, segments: list[Segment],
-                          audio_files: list[Path]) -> None:
+    def identify_speakers(
+        self,
+        session: RecordingSession,
+        course: Course,
+        segments: list[Segment],
+        audio_files: list[Path],
+    ) -> None:
         for seg in segments:
             if seg.channel == "mic":
                 seg.speaker = ME
@@ -144,9 +168,13 @@ class Finalizer:
             return
         try:
             audio = decode_file(clase)
-            ident = SpeakerIdentifier(embedder, self.d.profiles, course.id,
-                                      threshold=self.d.cfg.speakers.teacher_threshold,
-                                      distinguish_participants=self.d.cfg.speakers.distinguish_participants)
+            ident = SpeakerIdentifier(
+                embedder,
+                self.d.profiles,
+                course.id,
+                threshold=self.d.cfg.speakers.teacher_threshold,
+                distinguish_participants=self.d.cfg.speakers.distinguish_participants,
+            )
             embs: list[np.ndarray | None] = []
             for seg in segments:
                 if seg.channel == "mic":
@@ -168,26 +196,36 @@ class Finalizer:
             log.exception("No se pudo identificar a los hablantes")
             session.errors.append(f"Hablantes: {exc}")
 
-    def _save_clusters(self, session: RecordingSession, segments: list[Segment],
-                       embs: list[np.ndarray | None], result: object) -> None:
+    def _save_clusters(
+        self,
+        session: RecordingSession,
+        segments: list[Segment],
+        embs: list[np.ndarray | None],
+        result: object,
+    ) -> None:
         """Guarda los grupos de voces para la confirmación «¿Este es el profesor?»."""
         work = self.d.store.dir(session.id)
         groups: dict[str, list[int]] = {}
         for i, seg in enumerate(segments):
             if seg.channel != "mic":
                 groups.setdefault(seg.speaker, []).append(i)
-        info = []
+        info: list[dict] = []
         for label, idxs in groups.items():
-            vecs = [embs[i] for i in idxs if embs[i] is not None]
+            vecs = [e for i in idxs if (e := embs[i]) is not None]
             if not vecs:
                 continue
             centroid = np.mean(np.vstack(vecs), axis=0)
             np.save(work / f"voz_{len(info)}.npy", centroid.astype(np.float32))
             longest = max(idxs, key=lambda i: segments[i].end - segments[i].start)
-            info.append({"label": label, "file": f"voz_{len(info)}.npy",
-                         "example_t": segments[longest].start,
-                         "example_end": segments[longest].end,
-                         "seconds": sum(segments[i].end - segments[i].start for i in idxs)})
+            info.append(
+                {
+                    "label": label,
+                    "file": f"voz_{len(info)}.npy",
+                    "example_t": segments[longest].start,
+                    "example_end": segments[longest].end,
+                    "seconds": sum(segments[i].end - segments[i].start for i in idxs),
+                }
+            )
         (work / "voces.json").write_text(json.dumps(info, ensure_ascii=False), encoding="utf-8")
 
     def _cross_check(self, tasks: list[TaskItem], course: str = "") -> None:
@@ -218,18 +256,29 @@ class Finalizer:
             session.errors.append(f"Relaciones: {exc}")
         rel = path.relative_to(root).as_posix()
         if session.summary:
-            self.d.index.upsert_tasks(session.summary.tasks, session_id=session.id,
-                                      course=session.course_name, note_path=rel)
+            self.d.index.upsert_tasks(
+                session.summary.tasks,
+                session_id=session.id,
+                course=session.course_name,
+                note_path=rel,
+            )
         return path
 
-    def apply_retention(self, session: RecordingSession, course: Course, audio_files: list[Path]) -> None:
+    def apply_retention(
+        self, session: RecordingSession, course: Course, audio_files: list[Path]
+    ) -> None:
         cfg = self.d.cfg
         dest = None
         if cfg.audio.store_in_vault and session.transcript_dir:
             dest = self.d.layout.root / session.transcript_dir
         try:
-            res = finalize_audio(audio_files, cfg.format_for(course), cfg.retention_for(course),
-                                 final_pass_ok=session.final_pass_ok, dest_dir=dest)
+            res = finalize_audio(
+                audio_files,
+                cfg.format_for(course),
+                cfg.retention_for(course),
+                final_pass_ok=session.final_pass_ok,
+                dest_dir=dest,
+            )
             session.audio_files = [str(p) for p in res.kept]
             session.audio_deleted = not res.kept
             session.audio_expires_at = res.expires_at
@@ -241,7 +290,9 @@ class Finalizer:
     # ------------------------------------------------------------------ acciones posteriores
     def reprocess_with_llm(self, session: RecordingSession, course: Course) -> RecordingSession:
         """«Procesar clases pendientes»: agrega resumen y tareas con IA a una clase ya guardada."""
-        segments = self.d.store.load_segments(session.id, "final") or self.d.store.load_segments(session.id, "live")
+        segments = self.d.store.load_segments(session.id, "final") or self.d.store.load_segments(
+            session.id, "live"
+        )
         summary, used = self.d.postprocessor.summarize(segments, session.day, course.name)
         if not used:
             return session
@@ -258,8 +309,11 @@ class Finalizer:
         files = [Path(p) for p in session.audio_files if Path(p).exists()]
         if not files:
             raise FileNotFoundError("El audio de esta clase ya no está guardado.")
-        opts = TranscribeOptions(language=course.language, beam_size=self.d.cfg.transcription.beam_size,
-                                 glossary=tuple(course.glossary))
+        opts = TranscribeOptions(
+            language=course.language,
+            beam_size=self.d.cfg.transcription.beam_size,
+            glossary=tuple(course.glossary),
+        )
         segments = self.final_pass(session, [f for f in files], opts, [])
         clase = [f for f in files if f.stem == "clase"]
         self.identify_speakers(session, course, segments, clase)
@@ -269,14 +323,18 @@ class Finalizer:
         self.d.store.save(session)
         return session
 
-    def relabel_teacher(self, session: RecordingSession, course: Course, teacher_label: str) -> None:
+    def relabel_teacher(
+        self, session: RecordingSession, course: Course, teacher_label: str
+    ) -> None:
         """Corrección del usuario: «esta voz es la del profesor»."""
         work = self.d.store.dir(session.id)
         voices = json.loads((work / "voces.json").read_text(encoding="utf-8"))
         chosen = next(v for v in voices if v["label"] == teacher_label)
         embedding = np.load(work / chosen["file"])
         if self.d.speaker_embedder is not None:
-            self.d.profiles.replace(course.id, self.d.speaker_embedder.name, embedding, confirmed=True)
+            self.d.profiles.replace(
+                course.id, self.d.speaker_embedder.name, embedding, confirmed=True
+            )
         segments = self.d.store.load_segments(session.id, "final")
         n = 0
         mapping: dict[str, str] = {}
@@ -285,8 +343,11 @@ class Finalizer:
                 mapping[v["label"]] = TEACHER
             elif v["label"] == TEACHER or v["label"].startswith(PARTICIPANT):
                 n += 1
-                mapping[v["label"]] = (f"{PARTICIPANT} {n}" if self.d.cfg.speakers.distinguish_participants
-                                       else PARTICIPANT)
+                mapping[v["label"]] = (
+                    f"{PARTICIPANT} {n}"
+                    if self.d.cfg.speakers.distinguish_participants
+                    else PARTICIPANT
+                )
         for seg in segments:
             if seg.channel != "mic":
                 seg.speaker = mapping.get(seg.speaker, seg.speaker)
@@ -311,8 +372,9 @@ class Finalizer:
         text, mtime = read_text(path)
         md, doubtful = transcript_markdown(segments, self.d.cfg.transcription.low_confidence)
         session.low_confidence_words = doubtful
-        atomic_write_text(path, replace_block(text, "transcripcion", md, "## Transcripción"),
-                          expected_mtime=mtime)
+        atomic_write_text(
+            path, replace_block(text, "transcripcion", md, "## Transcripción"), expected_mtime=mtime
+        )
 
     def set_task_done(self, session: RecordingSession, task_id: str, done: bool) -> None:
         if not session.summary:

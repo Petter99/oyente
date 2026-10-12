@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 import sqlite3
 import threading
-from collections.abc import Iterable, Iterator
+from collections.abc import Iterable, Iterator, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import date
@@ -121,7 +121,9 @@ class SearchIndex:
             self._conn.execute("UPDATE notes SET vector = NULL")
             self._conn.execute("UPDATE chunks SET vector = NULL")
             self._conn.execute("UPDATE notes SET mtime = 0")
-        self._conn.execute("INSERT OR REPLACE INTO meta VALUES ('embedder', ?)", (self.embedder.name,))
+        self._conn.execute(
+            "INSERT OR REPLACE INTO meta VALUES ('embedder', ?)", (self.embedder.name,)
+        )
         self._conn.commit()
 
     @contextmanager
@@ -142,10 +144,21 @@ class SearchIndex:
         row = self._conn.execute("SELECT mtime FROM notes WHERE path=?", (path,)).fetchone()
         return row[0] if row else None
 
-    def upsert_note(self, *, path: str, title: str, kind: str, owned: bool, mtime: float,
-                    course: str | None = None, day: str | None = None, session_id: str | None = None,
-                    aliases: Iterable[str] = (), summary: str = "",
-                    chunks: list[tuple[str, float | None, str | None, str]] = ()) -> int:
+    def upsert_note(
+        self,
+        *,
+        path: str,
+        title: str,
+        kind: str,
+        owned: bool,
+        mtime: float,
+        course: str | None = None,
+        day: str | None = None,
+        session_id: str | None = None,
+        aliases: Iterable[str] = (),
+        summary: str = "",
+        chunks: Sequence[tuple[str, float | None, str | None, str]] = (),
+    ) -> int:
         """Inserta o reemplaza una nota con sus fragmentos (kind, t, hablante, texto)."""
         texts = [f"{title}. {summary}"] + [c[3] for c in chunks]
         vecs = self.embedder.embed(texts) if texts else np.zeros((0, self.embedder.dim))
@@ -157,15 +170,37 @@ class SearchIndex:
                 db.execute(
                     "UPDATE notes SET title=?, kind=?, owned=?, course=?, day=?, session_id=?, "
                     "aliases=?, summary=?, mtime=?, vector=? WHERE id=?",
-                    (title, kind, int(owned), course, day, session_id, json.dumps(list(aliases)),
-                     summary, mtime, _blob(vecs[0]), note_id),
+                    (
+                        title,
+                        kind,
+                        int(owned),
+                        course,
+                        day,
+                        session_id,
+                        json.dumps(list(aliases)),
+                        summary,
+                        mtime,
+                        _blob(vecs[0]),
+                        note_id,
+                    ),
                 )
             else:
                 cur = db.execute(
                     "INSERT INTO notes (path, title, kind, owned, course, day, session_id, aliases, "
                     "summary, mtime, vector) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
-                    (path, title, kind, int(owned), course, day, session_id,
-                     json.dumps(list(aliases)), summary, mtime, _blob(vecs[0])),
+                    (
+                        path,
+                        title,
+                        kind,
+                        int(owned),
+                        course,
+                        day,
+                        session_id,
+                        json.dumps(list(aliases)),
+                        summary,
+                        mtime,
+                        _blob(vecs[0]),
+                    ),
                 )
                 note_id = int(cur.lastrowid or 0)
             for (ckind, t, speaker, text), vec in zip(chunks, vecs[1:], strict=True):
@@ -193,9 +228,22 @@ class SearchIndex:
             sql += " AND course=?"
             args.append(course)
         rows = self._conn.execute(sql + " ORDER BY day, path", args).fetchall()
-        return [NoteRow(r["id"], r["path"], r["title"], r["kind"], bool(r["owned"]), r["course"],
-                        r["day"], r["session_id"], json.loads(r["aliases"]), r["summary"],
-                        _vec(r["vector"])) for r in rows]
+        return [
+            NoteRow(
+                r["id"],
+                r["path"],
+                r["title"],
+                r["kind"],
+                bool(r["owned"]),
+                r["course"],
+                r["day"],
+                r["session_id"],
+                json.loads(r["aliases"]),
+                r["summary"],
+                _vec(r["vector"]),
+            )
+            for r in rows
+        ]
 
     def all_paths(self) -> set[str]:
         return {r[0] for r in self._conn.execute("SELECT path FROM notes")}
@@ -208,8 +256,14 @@ class SearchIndex:
         terms = [t for t in fold(query).replace('"', " ").split() if len(t) > 2]
         return " OR ".join(f'"{t}"*' for t in terms)
 
-    def search(self, query: str, k: int = 6, course: str | None = None, since: date | None = None,
-               kinds: tuple[str, ...] | None = None) -> list[Hit]:
+    def search(
+        self,
+        query: str,
+        k: int = 6,
+        course: str | None = None,
+        since: date | None = None,
+        kinds: tuple[str, ...] | None = None,
+    ) -> list[Hit]:
         """Búsqueda híbrida: palabras exactas (FTS5/BM25) + similitud semántica, fusionadas por RRF."""
         filters = " AND 1=1"
         args: list[object] = []
@@ -241,7 +295,7 @@ class SearchIndex:
         ).fetchall()
         if rows:
             ids = [r[0] for r in rows]
-            mat = np.vstack([_vec(r[1]) for r in rows])
+            mat = np.vstack([np.frombuffer(r[1], dtype=np.float32) for r in rows])
             sims = mat @ qvec
             order = np.argsort(-sims)[:50]
             for rank, idx in enumerate(order):
@@ -256,17 +310,37 @@ class SearchIndex:
                 "SELECT c.*, n.path, n.title, n.course, n.day FROM chunks c JOIN notes n ON n.id=c.note_id WHERE c.id=?",
                 (chunk_id,),
             ).fetchone()
-            hits.append(Hit(chunk_id, r["path"], r["title"], r["course"], r["day"], r["kind"], r["t"],
-                            r["speaker"], r["text"], score))
+            hits.append(
+                Hit(
+                    chunk_id,
+                    r["path"],
+                    r["title"],
+                    r["course"],
+                    r["day"],
+                    r["kind"],
+                    r["t"],
+                    r["speaker"],
+                    r["text"],
+                    score,
+                )
+            )
         return hits
 
-    def similar_notes(self, vector: np.ndarray, kind: str | None = None, exclude: Iterable[str] = (),
-                      k: int = 5, min_score: float = 0.0) -> list[tuple[NoteRow, float]]:
+    def similar_notes(
+        self,
+        vector: np.ndarray,
+        kind: str | None = None,
+        exclude: Iterable[str] = (),
+        k: int = 5,
+        min_score: float = 0.0,
+    ) -> list[tuple[NoteRow, float]]:
         excluded = set(exclude)
-        candidates = [n for n in self.notes(kind) if n.vector is not None and n.path not in excluded]
+        candidates = [
+            n for n in self.notes(kind) if n.vector is not None and n.path not in excluded
+        ]
         if not candidates:
             return []
-        mat = np.vstack([n.vector for n in candidates])
+        mat = np.vstack([n.vector for n in candidates if n.vector is not None])
         sims = mat @ vector
         order = np.argsort(-sims)
         return [(candidates[i], float(sims[i])) for i in order[:k] if sims[i] >= min_score]
@@ -283,23 +357,46 @@ class SearchIndex:
         return int(row[0])
 
     # ------------------------------------------------------------------ tareas
-    def upsert_tasks(self, tasks: list[TaskItem], *, session_id: str, course: str, note_path: str) -> None:
+    def upsert_tasks(
+        self, tasks: list[TaskItem], *, session_id: str, course: str, note_path: str
+    ) -> None:
         with self.tx() as db:
-            db.execute("DELETE FROM tasks WHERE session_id=? AND id NOT IN (%s)" %
-                       ",".join("?" * len(tasks)), [session_id, *[t.id for t in tasks]])
+            db.execute(
+                "DELETE FROM tasks WHERE session_id=? AND id NOT IN (%s)"
+                % ",".join("?" * len(tasks)),
+                [session_id, *[t.id for t in tasks]],
+            )
             for t in tasks:
                 db.execute(
                     "INSERT OR REPLACE INTO tasks (id, session_id, course, note_path, description, due, "
                     "due_text, t, done, confirmed, kind, google_task_id, google_event_id, canvas_match, "
                     "canvas_due) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                    (t.id, session_id, course, note_path, t.description,
-                     t.due.isoformat() if t.due else None, t.due_text, t.t, int(t.done),
-                     int(t.confirmed), t.kind, t.google_task_id, t.google_event_id, t.canvas_match,
-                     t.canvas_due.isoformat() if t.canvas_due else None),
+                    (
+                        t.id,
+                        session_id,
+                        course,
+                        note_path,
+                        t.description,
+                        t.due.isoformat() if t.due else None,
+                        t.due_text,
+                        t.t,
+                        int(t.done),
+                        int(t.confirmed),
+                        t.kind,
+                        t.google_task_id,
+                        t.google_event_id,
+                        t.canvas_match,
+                        t.canvas_due.isoformat() if t.canvas_due else None,
+                    ),
                 )
 
-    def tasks(self, pending_only: bool = True, course: str | None = None,
-              until: date | None = None, since: date | None = None) -> list[dict]:
+    def tasks(
+        self,
+        pending_only: bool = True,
+        course: str | None = None,
+        until: date | None = None,
+        since: date | None = None,
+    ) -> list[dict]:
         sql = "SELECT * FROM tasks WHERE 1=1"
         args: list[object] = []
         if pending_only:
@@ -321,5 +418,9 @@ class SearchIndex:
             db.execute("UPDATE tasks SET done=? WHERE id=?", (int(done), task_id))
 
     def courses(self) -> list[str]:
-        return [r[0] for r in self._conn.execute(
-            "SELECT DISTINCT course FROM notes WHERE kind='clase' AND course IS NOT NULL ORDER BY course")]
+        return [
+            r[0]
+            for r in self._conn.execute(
+                "SELECT DISTINCT course FROM notes WHERE kind='clase' AND course IS NOT NULL ORDER BY course"
+            )
+        ]

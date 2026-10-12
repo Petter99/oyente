@@ -37,7 +37,11 @@ def client_config() -> dict[str, Any]:
     if env:
         return json.loads(env)
     try:
-        text = resources.files("transcriptor").joinpath("google_client.json").read_text(encoding="utf-8")
+        text = (
+            resources.files("transcriptor")
+            .joinpath("google_client.json")
+            .read_text(encoding="utf-8")
+        )
         return json.loads(text)
     except (FileNotFoundError, OSError):
         raise GoogleNotConfiguredError(
@@ -101,9 +105,13 @@ class GoogleAuth:
 
         wanted = sorted(set(scopes) | self.granted())
         flow = InstalledAppFlow.from_client_config(client_config(), wanted)
-        creds = flow.run_local_server(port=0, open_browser=True, prompt="consent",
-                                      include_granted_scopes="true",
-                                      success_message="Listo. Ya puedes cerrar esta pestaña y volver a la app.")
+        creds = flow.run_local_server(
+            port=0,
+            open_browser=True,
+            prompt="consent",
+            include_granted_scopes="true",
+            success_message="Listo. Ya puedes cerrar esta pestaña y volver a la app.",
+        )
         self._save(creds)
         return creds
 
@@ -118,7 +126,11 @@ class GoogleAuth:
             try:
                 import httpx
 
-                httpx.post("https://oauth2.googleapis.com/revoke", params={"token": creds.token}, timeout=10)
+                httpx.post(
+                    "https://oauth2.googleapis.com/revoke",
+                    params={"token": creds.token},
+                    timeout=10,
+                )
             except Exception:
                 log.warning("No se pudo revocar el token en Google (se borra igual)")
         self.secrets.delete(Secret.GOOGLE_TOKEN)

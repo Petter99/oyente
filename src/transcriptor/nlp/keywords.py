@@ -14,18 +14,72 @@ from transcriptor.nlp.text import STOPWORDS, fold, words
 log = logging.getLogger(__name__)
 
 # Palabras frecuentes en clases que no son temas.
-CLASS_NOISE = frozenset({
-    "clase", "clases", "profesor", "profe", "tarea", "tareas", "pregunta", "preguntas", "semana",
-    "hoy", "mañana", "jueves", "lunes", "martes", "miércoles", "viernes", "sábado", "domingo",
-    "minuto", "minutos", "hora", "horas", "examen", "parcial", "punto", "puntos", "chicos", "gracias",
-    "favor", "momento", "listo", "verdad", "importante", "próximo", "próxima", "siguiente", "primero",
-    "segundo", "tercero", "vez", "veces", "aquí", "nota", "notas", "hoja", "ejercicio", "ejercicios",
-    "entregar", "dudas", "duda", "tema", "temas", "ejemplo", "favor", "cuatro", "tres", "dos", "cinco",
-})
+CLASS_NOISE = frozenset(
+    {
+        "clase",
+        "clases",
+        "profesor",
+        "profe",
+        "tarea",
+        "tareas",
+        "pregunta",
+        "preguntas",
+        "semana",
+        "hoy",
+        "mañana",
+        "jueves",
+        "lunes",
+        "martes",
+        "miércoles",
+        "viernes",
+        "sábado",
+        "domingo",
+        "minuto",
+        "minutos",
+        "hora",
+        "horas",
+        "examen",
+        "parcial",
+        "punto",
+        "puntos",
+        "chicos",
+        "gracias",
+        "favor",
+        "momento",
+        "listo",
+        "verdad",
+        "importante",
+        "próximo",
+        "próxima",
+        "siguiente",
+        "primero",
+        "segundo",
+        "tercero",
+        "vez",
+        "veces",
+        "aquí",
+        "nota",
+        "notas",
+        "hoja",
+        "ejercicio",
+        "ejercicios",
+        "entregar",
+        "dudas",
+        "duda",
+        "tema",
+        "temas",
+        "ejemplo",
+        "cuatro",
+        "tres",
+        "dos",
+        "cinco",
+    }
+)
 
 
-def _candidates(text: str, max_n: int = 3,
-                forms: dict[str, Counter[str]] | None = None) -> Counter[str]:
+def _candidates(
+    text: str, max_n: int = 3, forms: dict[str, Counter[str]] | None = None
+) -> Counter[str]:
     toks = words(text)
     counts: Counter[str] = Counter()
     for n in range(1, max_n + 1):
@@ -34,7 +88,9 @@ def _candidates(text: str, max_n: int = 3,
             first, last = fold(gram[0]), fold(gram[-1])
             if first in STOPWORDS or last in STOPWORDS:
                 continue
-            if any(fold(g) in CLASS_NOISE or g.isdigit() or len(g) < 3 for g in (gram[0], gram[-1])):
+            if any(
+                fold(g) in CLASS_NOISE or g.isdigit() or len(g) < 3 for g in (gram[0], gram[-1])
+            ):
                 continue
             if n == 1 and len(gram[0]) < 5:
                 continue
@@ -45,8 +101,9 @@ def _candidates(text: str, max_n: int = 3,
     return counts
 
 
-def tfidf_keywords(text: str, top: int = 6, doc_freq: Callable[[str], int] | None = None,
-                   n_docs: int = 1) -> list[str]:
+def tfidf_keywords(
+    text: str, top: int = 6, doc_freq: Callable[[str], int] | None = None, n_docs: int = 1
+) -> list[str]:
     forms: dict[str, Counter[str]] = {}
     counts = _candidates(text, forms=forms)
     if not counts:
@@ -84,8 +141,14 @@ def extract_topics(text: str, top: int = 6) -> list[str]:
         emb = default_text_embedder()
         if isinstance(emb, SentenceTransformerEmbedder):
             kw = KeyBERT(model=emb._model)
-            pairs = kw.extract_keywords(text, keyphrase_ngram_range=(1, 3), stop_words=list(STOPWORDS),
-                                        use_mmr=True, diversity=0.6, top_n=top)
+            pairs = kw.extract_keywords(
+                text,
+                keyphrase_ngram_range=(1, 3),
+                stop_words=list(STOPWORDS),
+                use_mmr=True,
+                diversity=0.6,
+                top_n=top,
+            )
             return [p[0][0].upper() + p[0][1:] for p in pairs]
     except Exception:
         log.debug("KeyBERT no disponible; se usa TF-IDF")

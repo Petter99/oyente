@@ -45,7 +45,10 @@ def _nvidia() -> tuple[bool, float]:
     try:
         out = subprocess.run(
             ["nvidia-smi", "--query-gpu=memory.total", "--format=csv,noheader,nounits"],
-            capture_output=True, text=True, timeout=5, check=True,
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=True,
         ).stdout
         vram = max(float(x) for x in out.split() if x.strip()) / 1024
         return True, vram
@@ -80,20 +83,50 @@ def plan_asr(hw: Hardware, override: str = "auto", mlx_installed: bool | None = 
         mlx_installed = mlx_available()
 
     if hw.apple_silicon and mlx_installed:
-        plan = AsrPlan("mlx", "large-v3-turbo", "large-v3", "mlx", "float16",
-                       "Mac con Apple Silicon: motor MLX")
+        plan = AsrPlan(
+            "mlx",
+            "large-v3-turbo",
+            "large-v3",
+            "mlx",
+            "float16",
+            "Mac con Apple Silicon: motor MLX",
+        )
     elif hw.nvidia_gpu and hw.nvidia_vram_gb >= 5.5:
-        plan = AsrPlan("faster-whisper", "large-v3-turbo", "large-v3", "cuda", "float16",
-                       "GPU NVIDIA: faster-whisper en CUDA")
+        plan = AsrPlan(
+            "faster-whisper",
+            "large-v3-turbo",
+            "large-v3",
+            "cuda",
+            "float16",
+            "GPU NVIDIA: faster-whisper en CUDA",
+        )
     elif hw.ram_gb >= 7.5 and hw.cpu_count >= 4:
         # Camino principal de la mayoría de portátiles Windows: CPU con int8.
-        plan = AsrPlan("faster-whisper", "large-v3-turbo", "large-v3", "cpu", "int8",
-                       "CPU: faster-whisper int8")
+        plan = AsrPlan(
+            "faster-whisper",
+            "large-v3-turbo",
+            "large-v3",
+            "cpu",
+            "int8",
+            "CPU: faster-whisper int8",
+        )
     else:
-        plan = AsrPlan("faster-whisper", "small", "medium", "cpu", "int8",
-                       "Equipo modesto: modelos small/medium")
+        plan = AsrPlan(
+            "faster-whisper",
+            "small",
+            "medium",
+            "cpu",
+            "int8",
+            "Equipo modesto: modelos small/medium",
+        )
 
     if override != "auto":
-        plan = AsrPlan(plan.engine, override, override, plan.device, plan.compute_type,
-                       f"Modelo fijado por el usuario: {override}")
+        plan = AsrPlan(
+            plan.engine,
+            override,
+            override,
+            plan.device,
+            plan.compute_type,
+            f"Modelo fijado por el usuario: {override}",
+        )
     return plan

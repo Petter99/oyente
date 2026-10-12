@@ -15,6 +15,7 @@ sys.path.insert(0, str(ROOT))
 
 from tests.fakes import FakeLLM  # noqa: E402
 from tests.integration.test_pipeline import _deps, record_class  # noqa: E402
+
 from transcriptor.config.models import Course  # noqa: E402
 from transcriptor.llm.composite import NullLLMProvider  # noqa: E402
 
@@ -24,7 +25,9 @@ def main() -> None:
     vault = dest / "Bóveda"
     vault.mkdir(parents=True, exist_ok=True)
     (vault / "Mis apuntes").mkdir(exist_ok=True)
-    (vault / "Mis apuntes" / "Regla LIATE.md").write_text("Mis apuntes sobre LIATE.\n", encoding="utf-8")
+    (vault / "Mis apuntes" / "Regla LIATE.md").write_text(
+        "Mis apuntes sobre LIATE.\n", encoding="utf-8"
+    )
     calc = Course(name="Cálculo II", teacher="Ing. Pérez", glossary=["LIATE"])
     fis = Course(name="Física I", teacher="Dra. Ruiz")
     local = _deps(dest / "datos", vault, NullLLMProvider())

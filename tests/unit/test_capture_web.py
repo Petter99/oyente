@@ -30,7 +30,11 @@ def test_capture_page_requires_token(setup: tuple[TestClient, TabCaptureHub]) ->
     assert client.get("/captura?token=malo").status_code == 403
     ok = client.get(f"/captura?token={hub.token}")
     assert ok.status_code == 200 and "getDisplayMedia" in ok.text and "{{NOMBRE}}" not in ok.text
-    assert client.get("/captura/worklet.js").headers["content-type"].startswith("application/javascript")
+    assert (
+        client.get("/captura/worklet.js")
+        .headers["content-type"]
+        .startswith("application/javascript")
+    )
 
 
 def test_t11_2_audio_flows_into_source(setup: tuple[TestClient, TabCaptureHub]) -> None:
@@ -38,8 +42,9 @@ def test_t11_2_audio_flows_into_source(setup: tuple[TestClient, TabCaptureHub]) 
     src = BrowserTabSource()
     hub.attach(src)
     src.start()
-    with client.websocket_connect(f"/ws/audio?token={hub.token}",
-                                  headers={"origin": "http://127.0.0.1:8765"}) as ws:
+    with client.websocket_connect(
+        f"/ws/audio?token={hub.token}", headers={"origin": "http://127.0.0.1:8765"}
+    ) as ws:
         ws.send_text(json.dumps({"type": "start", "label": "Meet - Clase"}))
         ws.send_bytes(np.full(1600, 0.25, dtype="<f4").tobytes())
         ws.send_bytes(np.full(1600, 0.25, dtype="<f4").tobytes())
@@ -49,17 +54,24 @@ def test_t11_2_audio_flows_into_source(setup: tuple[TestClient, TabCaptureHub]) 
     assert src.lost  # al cerrar la conexión, la fuente se marca como perdida (la sesión sigue)
 
 
-@pytest.mark.parametrize(("origin", "token"), [
-    ("https://sitio-malicioso.com", "ok"),
-    ("http://127.0.0.1:8765", "token-incorrecto"),
-    ("chrome-extension://otraextensionqueno", None),
-])
-def test_t11_1_rejects_foreign_origins_and_bad_tokens(setup: tuple[TestClient, TabCaptureHub],
-                                                      origin: str, token: str | None) -> None:
+@pytest.mark.parametrize(
+    ("origin", "token"),
+    [
+        ("https://sitio-malicioso.com", "ok"),
+        ("http://127.0.0.1:8765", "token-incorrecto"),
+        ("chrome-extension://otraextensionqueno", None),
+    ],
+)
+def test_t11_1_rejects_foreign_origins_and_bad_tokens(
+    setup: tuple[TestClient, TabCaptureHub], origin: str, token: str | None
+) -> None:
     client, hub = setup
     tok = hub.token if token == "ok" else token
     url = f"/ws/audio?token={tok}" if tok else "/ws/audio"
-    with pytest.raises(WebSocketDisconnect), client.websocket_connect(url, headers={"origin": origin}) as ws:
+    with (
+        pytest.raises(WebSocketDisconnect),
+        client.websocket_connect(url, headers={"origin": origin}) as ws,
+    ):
         ws.receive_text()
 
 

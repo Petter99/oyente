@@ -78,7 +78,9 @@ def silence(seconds: float, noise: float = 0.002, seed: int = 0) -> np.ndarray:
     return (noise * rng.standard_normal(int(seconds * SR))).astype(np.float32)
 
 
-def conversation(turns: list[tuple[Voice, float]], pause: float = 1.0) -> tuple[np.ndarray, list[tuple[float, float, Voice]]]:
+def conversation(
+    turns: list[tuple[Voice, float]], pause: float = 1.0
+) -> tuple[np.ndarray, list[tuple[float, float, Voice]]]:
     """Concatena turnos de hablantes con pausas. Devuelve audio y la verdad (inicio, fin, voz)."""
     parts = [silence(0.5)]
     truth = []
