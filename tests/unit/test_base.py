@@ -193,3 +193,10 @@ def test_t3_8_hardware_plan(hw: Hardware, engine: str, device: str, live: str) -
 def test_hardware_plan_mac_without_mlx_falls_back() -> None:
     plan = plan_asr(Hardware("Darwin", "arm64", 10, 16, False, 0), mlx_installed=False)
     assert plan.engine == "faster-whisper"
+
+
+def test_hardware_plan_cuda_without_libs_uses_cpu() -> None:
+    # GPU NVIDIA detectada pero sin cuBLAS (cublas64_12.dll): CUDA fallaría al transcribir.
+    plan = plan_asr(Hardware("Windows", "AMD64", 8, 16, True, 8, cuda_libs=False))
+    assert (plan.device, plan.compute_type) == ("cpu", "int8")
+    assert plan.live_model == "large-v3-turbo"

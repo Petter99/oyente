@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ctypes
 import os
 import platform
 import shutil
@@ -23,6 +24,8 @@ class Hardware:
     ram_gb: float
     nvidia_gpu: bool
     nvidia_vram_gb: float
+    # nvidia-smi solo prueba que hay GPU y driver; faster-whisper además necesita cuBLAS de CUDA 12.
+    cuda_libs: bool = True
 
     @property
     def apple_silicon(self) -> bool:
@@ -56,6 +59,18 @@ def _nvidia() -> tuple[bool, float]:
         return False, 0.0
 
 
+def _cuda_libs_available() -> bool:
+    """¿Se puede cargar cuBLAS de CUDA 12? Sin ella faster-whisper falla al transcribir en GPU."""
+    names = {"Windows": ["cublas64_12.dll"], "Linux": ["libcublas.so.12"]}.get(platform.system(), [])
+    for name in names:
+        try:
+            ctypes.CDLL(name, winmode=0)  # winmode=0: busca también en PATH, como CTranslate2
+            return True
+        except OSError:
+            continue
+    return False
+
+
 @cache
 def detect() -> Hardware:
     has_gpu, vram = _nvidia()
@@ -66,6 +81,7 @@ def detect() -> Hardware:
         ram_gb=psutil.virtual_memory().total / 1024**3,
         nvidia_gpu=has_gpu,
         nvidia_vram_gb=vram,
+        cuda_libs=_cuda_libs_available() if has_gpu else False,
     )
 
 
@@ -91,7 +107,7 @@ def plan_asr(hw: Hardware, override: str = "auto", mlx_installed: bool | None = 
             "float16",
             "Mac con Apple Silicon: motor MLX",
         )
-    elif hw.nvidia_gpu and hw.nvidia_vram_gb >= 5.5:
+    elif hw.nvidia_gpu and hw.cuda_libs and hw.nvidia_vram_gb >= 5.5:
         plan = AsrPlan(
             "faster-whisper",
             "large-v3-turbo",

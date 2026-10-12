@@ -21,6 +21,11 @@ from transcriptor.paths import models_dir
 log = logging.getLogger(__name__)
 
 
+def _is_cuda_runtime_error(exc: BaseException) -> bool:
+    text = str(exc).lower()
+    return any(k in text for k in ("cublas", "cudnn", "cuda", "not found or cannot be loaded"))
+
+
 class FasterWhisperTranscriber:
     def __init__(
         self, model: str, device: str = "cpu", compute_type: str = "int8", live: bool = False
@@ -47,6 +52,22 @@ class FasterWhisperTranscriber:
         return self._model
 
     def _run(self, audio: Any, opts: TranscribeOptions, vad: bool) -> tuple[list[Segment], Any]:
+        try:
+            return self._run_once(audio, opts, vad)
+        except RuntimeError as exc:
+            if self.device != "cuda" or not _is_cuda_runtime_error(exc):
+                raise
+            # CTranslate2 carga las librerías de CUDA al primer uso, no al crear el modelo:
+            # si faltan (cuBLAS/cuDNN), se sigue en CPU en lugar de dejar la app sin transcribir.
+            log.warning("CUDA no disponible (%s); se continúa en CPU con int8", exc)
+            with self._lock:
+                self.device, self.compute_type = "cpu", "int8"
+                self._model = None
+            return self._run_once(audio, opts, vad)
+
+    def _run_once(
+        self, audio: Any, opts: TranscribeOptions, vad: bool
+    ) -> tuple[list[Segment], Any]:
         model = self._load()
         with self._lock:
             segments, info = model.transcribe(
