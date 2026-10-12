@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "{{NOMBRE}} – Capturar pestaña",
+  "short_name": "{{NOMBRE}}",
+  "version": "{{VERSION}}",
+  "description": "Envía el audio de la pestaña de tu clase a {{NOMBRE}} (en tu equipo) para transcribirla.",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA6Qm167l/SweOhdc/ZTH5yXtfu/36FL/sUTtSsZp79bNLtj2RoK2WG9WKSdE2hY+USZct4ukZet7H0MmxZHNg6I+yTdbdNDX6I47OsQGjY/7jJhhW4vwHNg/eJAEo71pgCROxY0dQLj5FSwgANI9AyKlGsEQVBLh/UHQh7/+BT7VkOp6WP+BS2zNeECeaoUvjsFdWXKL0V5xr3kW8OqkSCzrJQTQJ2eTPuon8J9WD3UyeoXfd6hCjo2BdhVRHoo6ile2ol7sRNdYVnR0xZC0CqXZcYKmXdt8OAxi7V6ZbiugaJPk4zd/8f9h6actQiM7q628FAl6i1N+yZqtB0V/fCwIDAQAB",
+  "minimum_chrome_version": "116",
+  "permissions": ["tabCapture", "offscreen", "alarms", "storage"],
+  "background": { "service_worker": "background.js" },
+  "action": {
+    "default_title": "Transcribir esta pestaña con {{NOMBRE}}",
+    "default_icon": { "16": "icons/16.png", "32": "icons/32.png", "48": "icons/48.png", "128": "icons/128.png" }
+  },
+  "icons": { "16": "icons/16.png", "32": "icons/32.png", "48": "icons/48.png", "128": "icons/128.png" }
+}

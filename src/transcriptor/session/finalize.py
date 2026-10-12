@@ -92,7 +92,7 @@ class Finalizer:
         session.summary = summary
         session.llm_processed = used_llm
         session.llm_tokens += self.d.postprocessor.tokens_used
-        self._cross_check(summary.tasks)
+        self._cross_check(summary.tasks, course.name)
 
         self._step(session, "Creando la nota y sus relaciones")
         self.write_note(session, segments)
@@ -190,12 +190,12 @@ class Finalizer:
                          "seconds": sum(segments[i].end - segments[i].start for i in idxs)})
         (work / "voces.json").write_text(json.dumps(info, ensure_ascii=False), encoding="utf-8")
 
-    def _cross_check(self, tasks: list[TaskItem]) -> None:
+    def _cross_check(self, tasks: list[TaskItem], course: str = "") -> None:
         checker = self.d.task_checker
         if checker is None or not tasks:
             return
         try:
-            checker.cross_check(tasks)  # type: ignore[attr-defined]
+            checker.cross_check(tasks, course)  # type: ignore[attr-defined]
         except Exception:
             log.exception("No se pudo comparar con el calendario de la universidad")
 
@@ -248,7 +248,7 @@ class Finalizer:
         session.summary = summary
         session.llm_processed = True
         session.llm_tokens += self.d.postprocessor.tokens_used
-        self._cross_check(summary.tasks)
+        self._cross_check(summary.tasks, course.name)
         self.write_note(session, segments)
         self.d.store.save(session)
         self.d.bus.emit("session_updated", session_id=session.id)
