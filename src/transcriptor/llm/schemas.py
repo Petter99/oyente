@@ -29,6 +29,12 @@ class LLMClassSummary(BaseModel):
     puntos_clave: list[LLMKeyPoint]
     temas: list[str] = Field(description="3 a 8 conceptos o temas, como nombres de nota (sin '#')")
     tareas: list[LLMTask]
+    curso_sugerido: str = Field(
+        description="Nombre de la materia si se deduce de la transcripción o del evento de calendario; si no, vacío"
+    )
+    profesor_sugerido: str = Field(
+        description="Nombre del profesor si se dice o aparece en el evento de calendario; si no, vacío"
+    )
 
 
 class ChunkInsights(BaseModel):

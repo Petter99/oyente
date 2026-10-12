@@ -98,6 +98,7 @@ class AIConfig(BaseModel):
     extraction_tier: Tier = "economico"
     chat_tier: Tier = "estandar"
     live_suggestions: bool = True
+    suggest_courses: bool = True  # proponer curso/profesor al terminar una clase
     live_interval_min: int = Field(10, ge=5, le=30)
     live_max_calls: int = Field(12, ge=1, le=100)
     monthly_token_limit: int | None = 2_000_000

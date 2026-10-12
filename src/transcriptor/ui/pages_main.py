@@ -408,6 +408,11 @@ def class_page(svc: AppServices, session_id: str) -> None:
     )
 
     def actions() -> None:
+        ui.button(
+            "Curso y profesor",
+            icon="school",
+            on_click=lambda: course_info_dialog(svc, session),
+        ).classes("btn-plain")
         if session.note_path:
             ui.button(
                 "Abrir en Obsidian",
@@ -444,6 +449,8 @@ def class_page(svc: AppServices, session_id: str) -> None:
             )
         if session.teacher_needs_confirmation:
             _teacher_confirmation(svc, session)
+        if session.suggestion is not None and session.suggestion.status == "pending":
+            _course_suggestion(svc, session)
         _audio_panel(svc, session)
         segments = svc.store.load_segments(session_id, "final") or svc.store.load_segments(
             session_id, "live"
@@ -667,6 +674,71 @@ def _audio_panel(svc: AppServices, session: RecordingSession) -> None:
                 ui.notify(f"No se pudo re-transcribir: {exc}", type="negative")
 
         ui.button("Re-transcribir", on_click=retranscribe).props("flat dense")
+
+
+def course_info_dialog(
+    svc: AppServices, session: RecordingSession, name: str = "", teacher: str = ""
+) -> None:
+    """Crear/asignar curso y profesor a mano (o corregir la propuesta antes de aceptarla)."""
+    with ui.dialog() as dlg, ui.card().style("width:460px"):
+        ui.label("Curso y profesor").style("font-weight:700")
+        ui.label(
+            "Si el curso no existe se crea; si existe, se completa el profesor."
+        ).classes("small muted")
+        name_in = ui.input("Nombre del curso", value=name or session.course_name).classes("w-full")
+        teacher_in = ui.input("Profesor", value=teacher or session.teacher).classes("w-full")
+
+        async def save() -> None:
+            if not (name_in.value or "").strip():
+                ui.notify("Escribe el nombre del curso", type="warning")
+                return
+            course, created = await run.io_bound(
+                svc.apply_course_info, session.id, name_in.value, teacher_in.value or ""
+            )
+            dlg.close()
+            ui.notify(
+                f"Curso «{course.name}» creado." if created else f"Curso «{course.name}» actualizado.",
+                type="positive",
+            )
+            ui.navigate.reload()
+
+        with ui.row().classes("gap-2"):
+            ui.button("Guardar", on_click=save).classes("btn-primary")
+            ui.button("Cancelar", on_click=dlg.close).classes("btn-plain")
+    dlg.open()
+
+
+def _course_suggestion(svc: AppServices, session: RecordingSession) -> None:
+    sug = session.suggestion
+    assert sug is not None
+    origin = "tu Google Calendar" if sug.source == "calendario" else "la IA"
+    creates = sug.course_id is None
+    teacher_txt = f" con el profesor {sug.teacher}" if sug.teacher else ""
+    question = (
+        f"Según {origin}, esta clase es de «{sug.course_name}»{teacher_txt}. "
+        + ("¿Quieres crear ese curso?" if creates else "¿Guardar el profesor en el curso?")
+    )
+
+    async def accept() -> None:
+        await run.io_bound(svc.apply_course_info, session.id, sug.course_name, sug.teacher)
+        ui.notify("Listo, se guardó.", type="positive")
+        ui.navigate.reload()
+
+    def dismiss() -> None:
+        svc.dismiss_suggestion(session.id)
+        ui.navigate.reload()
+
+    with ui.element("section").classes("banner purple").style("flex-wrap:wrap"):
+        ui.icon("auto_awesome").style("font-size:22px")
+        with ui.column().classes("flex-1 gap-1"):
+            ui.label("¿Curso y profesor correctos?").style("font-weight:700")
+            ui.label(question).classes("small")
+        ui.button("Crear" if creates else "Guardar", on_click=accept).classes("btn-primary")
+        ui.button(
+            "Editar",
+            on_click=lambda: course_info_dialog(svc, session, sug.course_name, sug.teacher),
+        ).classes("btn-plain")
+        ui.button("No", on_click=dismiss).classes("btn-plain")
 
 
 def _teacher_confirmation(svc: AppServices, session: RecordingSession) -> None:

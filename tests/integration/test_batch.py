@@ -16,6 +16,7 @@ from transcriptor.llm.composite import BudgetedProvider, FallbackProvider
 from transcriptor.services import AppServices
 
 SUMMARY = {"titulo": "Integración por partes", "resumen": "Resumen por lotes.", "puntos_clave": [],
+           "curso_sugerido": "", "profesor_sugerido": "",
            "temas": ["Integración por partes"],
            "tareas": [{"descripcion": "Hoja 4", "fecha_texto": "el jueves", "tipo": "tarea", "minuto": ""}]}
 

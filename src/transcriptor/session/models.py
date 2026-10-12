@@ -40,6 +40,16 @@ class KeyPoint(BaseModel):
     t: float | None = None
 
 
+class CourseSuggestion(BaseModel):
+    """Curso y profesor detectados (Google Calendar o IA). Nunca se aplican sin preguntar."""
+
+    course_name: str
+    teacher: str = ""
+    course_id: str | None = None  # curso existente al que corresponde (None = crear uno nuevo)
+    source: Literal["calendario", "ia"] = "ia"
+    status: Literal["pending", "accepted", "dismissed"] = "pending"
+
+
 class ClassSummary(BaseModel):
     title: str = ""
     summary: str = ""
@@ -47,6 +57,8 @@ class ClassSummary(BaseModel):
     topics: list[str] = Field(default_factory=list)
     tasks: list[TaskItem] = Field(default_factory=list)
     source: Literal["llm", "local"] = "local"
+    suggested_course: str = ""
+    suggested_teacher: str = ""
 
 
 class RecordingSession(BaseModel):
@@ -80,6 +92,7 @@ class RecordingSession(BaseModel):
     teacher_example_t: float | None = None
     low_confidence_words: int = 0
 
+    suggestion: CourseSuggestion | None = None
     summary: ClassSummary | None = None
     llm_processed: bool = False
     llm_tokens: int = 0

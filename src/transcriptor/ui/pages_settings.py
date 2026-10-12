@@ -525,6 +525,11 @@ def _ai(svc: AppServices) -> None:
             value=ai.live_suggestions,
             on_change=lambda e: (setattr(ai, "live_suggestions", e.value), _saved(svc)),
         )
+        ui.switch(
+            "Proponer curso y profesor al terminar una clase",
+            value=ai.suggest_courses,
+            on_change=lambda e: (setattr(ai, "suggest_courses", e.value), _saved(svc)),
+        )
         ui.label("Intervalo (minutos) si no hay palabras clave").classes("q-mt-sm")
         ui.slider(
             min=5,
