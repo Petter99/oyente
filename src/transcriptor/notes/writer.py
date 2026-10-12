@@ -36,11 +36,14 @@ class VaultLayout:
     classes: str = "Clases"
     topics: str = "Temas"
     teachers: str = "Profesores"
+    # Raíz de las transcripciones (.txt/.json), separada de las notas. None = dentro del curso.
+    transcripts_root: Path | None = None
 
     @staticmethod
     def from_config(cfg: AppConfig, root: Path) -> VaultLayout:
         g = cfg.general
-        return VaultLayout(root, g.classes_folder, g.topics_folder, g.teachers_folder)
+        tr = Path(g.transcripts_path) if g.transcripts_path else None
+        return VaultLayout(root, g.classes_folder, g.topics_folder, g.teachers_folder, tr)
 
     def course_dir(self, course: str) -> Path:
         return self.root / self.classes / safe_filename(course)
@@ -58,9 +61,23 @@ class VaultLayout:
         return self.root / self.teachers / f"{safe_filename(teacher)}.md"
 
     def transcript_dir(self, course: str, session: RecordingSession) -> Path:
-        return (
-            self.course_dir(course) / TRANSCRIPT_DIR / session.started_at.strftime("%Y-%m-%d_%H%M")
-        )
+        stamp = session.started_at.strftime("%Y-%m-%d_%H%M")
+        if self.transcripts_root is not None:
+            return self.transcripts_root / safe_filename(course) / stamp
+        return self.course_dir(course) / TRANSCRIPT_DIR / stamp
+
+    def transcript_folder(self, session: RecordingSession) -> Path | None:
+        """Carpeta con los archivos de transcripción de una sesión ya guardada.
+
+        ``session.transcript_dir`` es relativo a la raíz de transcripciones; las sesiones
+        anteriores a la separación lo tienen relativo a la carpeta de notas.
+        """
+        if not session.transcript_dir:
+            return None
+        candidates = [self.root / session.transcript_dir]
+        if self.transcripts_root is not None:
+            candidates.insert(0, self.transcripts_root / session.transcript_dir)
+        return next((c for c in candidates if c.exists()), candidates[0])
 
     def rel(self, path: Path) -> str:
         """Ruta relativa a la bóveda, sin .md, con / (para enlaces de Obsidian)."""
@@ -240,7 +257,8 @@ class NoteWriter:
             folder / "segmentos.json",
             json.dumps([s.to_dict() for s in segments], ensure_ascii=False),
         )
-        session.transcript_dir = folder.relative_to(self.layout.root).as_posix()
+        base = self.layout.transcripts_root or self.layout.root
+        session.transcript_dir = folder.relative_to(base).as_posix()
         return folder
 
     def frontmatter(self, data: ClassNoteData) -> dict[str, Any]:

@@ -26,15 +26,12 @@ TRANSCRIPT_LINE = re.compile(
 LINK_ALIAS = re.compile(r"\[\[([^\]|]+)(?:\|([^\]]+))?\]\]")
 
 
-def iter_markdown(root: Path, excluded: list[str]) -> Iterator[Path]:
-    excluded_norm = [e.strip("/").casefold() for e in excluded if e.strip()]
+def iter_markdown(root: Path) -> Iterator[Path]:
+    """Notas de la carpeta de trabajo. La app no sale de ``root``, así que no hace falta excluir."""
     for path in root.rglob("*.md"):
         rel = path.relative_to(root)
         parts = rel.parts[:-1]
         if any(p in SKIP_DIRS or p.startswith(".") for p in parts):
-            continue
-        rel_str = rel.as_posix().casefold()
-        if any(rel_str == e or rel_str.startswith(e + "/") for e in excluded_norm):
             continue
         if path.name.startswith(".~oy-"):
             continue
@@ -154,11 +151,11 @@ def index_note(index: SearchIndex, root: Path, path: Path, force: bool = False) 
         )
 
 
-def sync_vault(index: SearchIndex, root: Path, excluded: list[str]) -> int:
-    """Indexado incremental de toda la bóveda. Devuelve cuántas notas se revisaron."""
+def sync_vault(index: SearchIndex, root: Path) -> int:
+    """Indexado incremental de la carpeta de trabajo. Devuelve cuántas notas se revisaron."""
     seen: set[str] = set()
     n = 0
-    for path in iter_markdown(root, excluded):
+    for path in iter_markdown(root):
         seen.add(path.relative_to(root).as_posix())
         index_note(index, root, path)
         n += 1

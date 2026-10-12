@@ -15,9 +15,11 @@ from transcriptor.calendar.ics import GOOGLE_ADD_BY_URL, GUIDES
 from transcriptor.capture_web.hub import EXTENSION_IDS
 from transcriptor.config.secrets import Secret
 from transcriptor.hardware import detect, plan_asr
+from transcriptor.links.obsidian_env import DOWNLOAD_URL
 from transcriptor.paths import data_dir, log_dir
 from transcriptor.services import AppServices
 from transcriptor.ui.common import banner, frame, open_external, pill, reveal_in_folder
+from transcriptor.ui.workspace import workspace_form
 
 log = logging.getLogger(__name__)
 
@@ -94,32 +96,29 @@ def _saved(svc: AppServices) -> None:
 def _general(svc: AppServices) -> None:
     g = svc.cfg.general
     with _section(
-        "Carpeta compartida / bóveda de Obsidian",
-        "Aquí se guardan las notas. Puede estar en Google Drive, OneDrive, Dropbox o iCloud.",
+        "Dónde se guardan tus clases",
+        "Las notas (.md) van a una subcarpeta de tu bóveda de Obsidian y las transcripciones "
+        "(.txt) a otra carpeta. Puede estar en Google Drive, OneDrive, Dropbox o iCloud.",
     ):
-        path = ui.input("Carpeta", value=g.vault_path or "").classes("w-full")
-
-        async def browse() -> None:
-            chosen = await pick_folder(path.value)
-            if chosen:
-                path.set_value(chosen)
+        save_workspace = workspace_form(svc, allow_move=True)
 
         def save() -> None:
-            value = (path.value or "").strip()
-            if value and not Path(value).is_dir():
-                ui.notify("La carpeta no existe", type="negative")
-                return
-            g.vault_path = value or None
-            _saved(svc)
+            if save_workspace():
+                _saved(svc)
+                ui.navigate.to("/configuracion?tab=general")
 
-        with ui.row().classes("gap-2"):
-            ui.button("Examinar…", on_click=browse).classes("btn-plain")
+        with ui.row().classes("gap-2 q-mt-sm"):
             ui.button("Guardar", on_click=save).classes("btn-primary")
             if g.vault_path:
                 ui.button(
-                    "Mostrar", on_click=lambda: reveal_in_folder(Path(g.vault_path or ""))
+                    "Mostrar notas", on_click=lambda: reveal_in_folder(Path(g.vault_path or ""))
                 ).props("flat")
-    with _section("Carpetas dentro de la bóveda"):
+            if g.transcripts_path:
+                ui.button(
+                    "Mostrar transcripciones",
+                    on_click=lambda: reveal_in_folder(Path(g.transcripts_path or "")),
+                ).props("flat")
+    with _section("Carpetas dentro de la carpeta de trabajo"):
         with ui.row().classes("gap-3 w-full"):
             ui.input("Clases", value=g.classes_folder).bind_value(g, "classes_folder").classes(
                 "flex-1"
@@ -608,20 +607,31 @@ def _obsidian(svc: AppServices) -> None:
             max=20,
             on_change=lambda e: (setattr(o, "related_max", int(e.value or 0)), _saved(svc)),
         )
-    with _section("Carpetas excluidas", "No se leen ni se enlazan (p. ej. Diario, Privado)."):
-        chips = ui.input_chips("Carpetas", value=list(o.excluded_folders)).classes("w-full")
-        ui.button(
-            "Guardar",
-            on_click=lambda: (setattr(o, "excluded_folders", list(chips.value)), _saved(svc)),
-        ).classes("btn-primary")
     with _section(
-        "Reconstruir relaciones", "Vuelve a analizar toda la bóveda (útil la primera vez)."
+        "Estado de Obsidian",
+        "La app solo lee y escribe en su carpeta de trabajo; el resto de tu bóveda no se toca.",
+    ):
+        vault = svc.obsidian_vault
+        ui.label(f"Carpeta de trabajo: {svc.vault_root}").classes("small")
+        ui.label(
+            f"Bóveda de Obsidian: {vault}" if vault else "Bóveda de Obsidian: ninguna detectada"
+        ).classes("small")
+        ui.label(
+            "Abrir notas en Obsidian: "
+            + ("disponible" if svc.can_open_in_obsidian else "no disponible (se abren con el sistema)")
+        ).classes("small")
+        if not svc.can_open_in_obsidian:
+            ui.button(
+                "Descargar Obsidian", icon="download", on_click=lambda: open_external(DOWNLOAD_URL)
+            ).props("flat")
+    with _section(
+        "Reconstruir relaciones", "Vuelve a analizar tus notas (útil la primera vez)."
     ):
 
         async def rebuild() -> None:
             from transcriptor.links.vault import sync_vault
 
-            n = await run.io_bound(sync_vault, svc.index, svc.vault_root, o.excluded_folders)
+            n = await run.io_bound(sync_vault, svc.index, svc.vault_root)
             ui.notify(f"{n} notas analizadas", type="positive")
 
         ui.button("Reconstruir relaciones", icon="sync", on_click=rebuild).classes("btn-primary")

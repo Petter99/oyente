@@ -16,12 +16,12 @@ def first_run(monkeypatch: pytest.MonkeyPatch) -> None:
 
 async def _skip_to_last_step(user: User) -> None:
     await user.open("/bienvenida")
-    await user.should_see("Elige la carpeta")
+    await user.should_see("Elige dónde se guardarán tus clases")
     user.find(kind=ui.button, content="Continuar").click()  # la carpeta no se puede omitir
     for heading in ["Tus cursos", "Inteligencia artificial", "Conectar con Google", "Audio"]:
         await user.should_see(heading)
         user.find(kind=ui.button, content="Omitir").click()
-    await user.should_see("Relaciones con Obsidian")
+    await user.should_see("Relaciones entre tus clases")
 
 
 async def test_last_step_has_no_skip_button(first_run: None, user: User) -> None:
@@ -30,7 +30,7 @@ async def test_last_step_has_no_skip_button(first_run: None, user: User) -> None
     await user.should_not_see("Omitir")
 
 
-async def test_finish_without_excluded_folders_goes_home(first_run: None, user: User) -> None:
+async def test_finish_goes_home(first_run: None, user: User) -> None:
     await _skip_to_last_step(user)
     user.find(kind=ui.button, content="Terminar").click()
     await user.should_see("Clases recientes")
