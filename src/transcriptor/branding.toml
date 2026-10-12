@@ -1,0 +1,11 @@
+# Marca visible de la app. Es el ÚNICO lugar donde se escribe el nombre.
+# Para renombrar la app: cambiar estos valores, reemplazar assets/branding/ y recompilar.
+# Los identificadores internos ("transcriptor") NO cambian nunca: ver docs/plan/plan-fases.md §6.5.
+nombre = "Oyente"
+nombre_corto = "Oyente"
+eslogan = "Escucha la clase por ti"
+sitio_web = ""
+soporte = ""
+calendario_google = "Clases – {nombre}"
+lista_tasks = "Tareas de clase"
+ejecutable = "{nombre}"

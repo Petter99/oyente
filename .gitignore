@@ -1,0 +1,38 @@
+# Entorno
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+.coverage
+htmlcov/
+
+# Compilación
+build/
+dist/
+*.spec.bak
+
+# Datos personales y pesados: nunca al repositorio
+*.flac
+*.wav
+*.opus
+*.ogg
+*.mp3
+models/
+perfiles/
+*.sqlite
+*.sqlite-*
+config.local.yaml
+.env
+token*.json
+client_secret*.json
+uso_tokens.json
+
+# Herramientas
+.claude/
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

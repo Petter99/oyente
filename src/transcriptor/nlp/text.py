@@ -1,0 +1,48 @@
+"""Utilidades de texto en español (normalización y palabras vacías)."""
+
+from __future__ import annotations
+
+import re
+import unicodedata
+
+STOPWORDS = frozenset("""
+a al algo algún alguna algunas alguno algunos ante antes aquel aquella aquellas aquello aquellos aquí
+así aun aunque bajo bien cada casi como con contra cual cuales cualquier cuando cuanto de del desde
+donde dos durante e el ella ellas ello ellos en entre era eran eres es esa esas ese eso esos esta
+está están estaba estamos estar este esto estos estoy fue fueron ha había han has hasta hay he
+hemos la las le les lo los mas más me mi mis mismo mucho muy nada ni no nos nosotros o os otra
+otras otro otros para pero poco por porque que qué quien quién se sea ser si sí sido sin sobre
+solo sólo son su sus también tan tanto te tenemos tener tengo ti tiene tienen todo todos tu tus
+un una uno unos usted ustedes va vamos van vez y ya yo
+entonces bueno okay ok vale pues digamos o sea eh ehm este ahora acá ahí allá aquí cosa cosas
+hacer hace hacemos hacen hecho dice dijo decir ver vemos voy vas tenga tengan puede pueden podemos
+quiero quieren creo sé sabe saben ejemplo caso parte forma manera tipo
+""".split())
+
+
+def fold(text: str) -> str:
+    """Minúsculas y sin tildes, para comparar («Integración» == «integracion»)."""
+    norm = unicodedata.normalize("NFKD", text.casefold())
+    return "".join(c for c in norm if not unicodedata.combining(c))
+
+
+WORD = re.compile(r"[\wáéíóúüñÁÉÍÓÚÜÑ]+", re.UNICODE)
+
+
+def words(text: str) -> list[str]:
+    return WORD.findall(text)
+
+
+SENTENCE = re.compile(r"(?<=[.!?¿¡…])\s+|\n+")
+
+
+def sentences(text: str) -> list[str]:
+    return [s.strip() for s in SENTENCE.split(text) if s.strip()]
+
+
+def contains_phrase(haystack_folded: str, phrase: str) -> bool:
+    """¿Aparece ``phrase`` como palabras completas en el texto ya normalizado con fold()?"""
+    needle = fold(phrase).strip()
+    if not needle:
+        return False
+    return re.search(rf"(?<!\w){re.escape(needle)}(?!\w)", haystack_folded) is not None

@@ -1,0 +1,27 @@
+{{ frontmatter }}
+# {{ title }} — {{ day }}
+
+{{ block("navegacion", navigation) }}
+
+## Resumen
+{{ block("resumen", summary_md) }}
+
+## Puntos importantes
+{{ block("puntos", key_points_md) }}
+
+## Tareas
+{{ block("tareas", tasks_md) }}
+
+## Temas de interés
+{{ block("temas", topics_md) }}
+
+## Relacionado
+{{ block("relacionado", related_md) }}
+{% if markers_md %}
+
+## Momentos marcados
+{{ block("marcas", markers_md) }}
+{% endif %}
+
+## Transcripción
+{{ block("transcripcion", transcript_md) }}
