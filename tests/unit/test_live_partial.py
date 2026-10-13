@@ -50,3 +50,12 @@ def test_partial_is_replaced_by_final_and_stale_partials_are_ignored() -> None:
     # Uno de la frase siguiente sí se muestra.
     svc._on_event(Event("partial", {"channel": "clase", "start": 3.2, "end": 4.0, "text": "bien"}))
     assert svc.live.partials == {"clase": "bien"}
+
+
+def test_speaker_filter_becomes_a_dropdown_with_many_speakers() -> None:
+    from transcriptor.ui.pages_main import uses_dropdown_filter
+
+    few = ["Todos", "Participante", "Profesor", "Yo"]
+    many = ["Todos", *[f"Participante {n}" for n in range(1, 12)], "Profesor"]
+    assert not uses_dropdown_filter(few)
+    assert uses_dropdown_filter(many)

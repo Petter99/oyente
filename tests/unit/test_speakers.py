@@ -110,3 +110,22 @@ def test_t4_6_profiles_are_local_and_deletable(tmp_path: Path) -> None:
     assert store.get("c1", "spectral") is not None
     store.delete("c1")
     assert store.get("c1", "spectral") is None
+
+
+def test_many_voices_are_just_participants_when_not_distinguished(tmp_path: Path) -> None:
+    """Muchas voces (p. ej. un video con varios personajes): solo Profesor y Participante."""
+    crowd = [Voice(f0=90 + 25 * i, formant_scale=0.85 + 0.06 * i, seed=10 + i) for i in range(8)]
+    turns = [(PROFESOR, 6.0, "clase")]
+    for voice in crowd:
+        turns += [(voice, 2.5, "clase"), (PROFESOR, 4.0, "clase")]
+    ident = SpeakerIdentifier(
+        SpectralEmbedder(),
+        SpeakerProfileStore(tmp_path / "perfiles"),
+        "c",
+        distinguish_participants=False,
+    )
+    segs, audio = _segments(turns)
+    embs = [ident.embedder.embed(a) for a in audio]
+    labels = set(ident.label_final(segs, embs).labels)
+    assert labels <= {TEACHER, "Participante"}, labels
+    assert "Participante" in labels

@@ -437,7 +437,9 @@ def class_page(svc: AppServices, session_id: str) -> None:
     )
     with frame(svc, "clases", session.title, subtitle, show_search=False, actions=actions):
         if processing:
-            progress = ui.label(f"Procesando: {st.step if st and st.step else 'empezando'}…").classes("muted")
+            progress = ui.label(
+                f"Procesando: {st.step if st and st.step else 'empezando'}…"
+            ).classes("muted")
             ui.linear_progress(show_value=False).props("indeterminate")
 
             def poll() -> None:
@@ -608,6 +610,14 @@ def marked_text(seg: Any, threshold: float = 0.45) -> str:
     return "".join(out).strip()
 
 
+MAX_FILTER_CHIPS = 5  # con más hablantes, el filtro pasa de botones a lista desplegable
+
+
+def uses_dropdown_filter(speakers: list[str]) -> bool:
+    """Los botones no hacen salto de línea: con muchos hablantes se saldrían de la tarjeta."""
+    return len(speakers) > MAX_FILTER_CHIPS
+
+
 def _transcript(segments: list, live: bool = False) -> None:
     with ui.element("section").classes("card"):
         state = {"speaker": "Todos"}
@@ -616,11 +626,15 @@ def _transcript(segments: list, live: bool = False) -> None:
             ui.html("<h2>Transcripción" + (" en vivo" if live else "") + "</h2>", sanitize=False)
             ui.element("div").classes("flex-1")
             if len(speakers) > 2:
-                ui.toggle(
-                    speakers,
-                    value="Todos",
-                    on_change=lambda e: (state.update(speaker=e.value), body.refresh()),
-                ).props("dense no-caps")
+
+                def choose(e: Any) -> None:
+                    state.update(speaker=e.value)
+                    body.refresh()
+
+                if uses_dropdown_filter(speakers):
+                    ui.select(speakers, value="Todos", on_change=choose).props("dense outlined")
+                else:
+                    ui.toggle(speakers, value="Todos", on_change=choose).props("dense no-caps")
 
         @ui.refreshable
         def body() -> None:
@@ -693,9 +707,9 @@ def course_info_dialog(
     """Crear/asignar curso y profesor a mano (o corregir la propuesta antes de aceptarla)."""
     with ui.dialog() as dlg, ui.card().style("width:460px"):
         ui.label("Curso y profesor").style("font-weight:700")
-        ui.label(
-            "Si el curso no existe se crea; si existe, se completa el profesor."
-        ).classes("small muted")
+        ui.label("Si el curso no existe se crea; si existe, se completa el profesor.").classes(
+            "small muted"
+        )
         name_in = ui.input("Nombre del curso", value=name or session.course_name).classes("w-full")
         teacher_in = ui.input("Profesor", value=teacher or session.teacher).classes("w-full")
 
@@ -708,7 +722,9 @@ def course_info_dialog(
             )
             dlg.close()
             ui.notify(
-                f"Curso «{course.name}» creado." if created else f"Curso «{course.name}» actualizado.",
+                f"Curso «{course.name}» creado."
+                if created
+                else f"Curso «{course.name}» actualizado.",
                 type="positive",
             )
             ui.navigate.reload()
@@ -725,9 +741,8 @@ def _course_suggestion(svc: AppServices, session: RecordingSession) -> None:
     origin = "tu Google Calendar" if sug.source == "calendario" else "la IA"
     creates = sug.course_id is None
     teacher_txt = f" con el profesor {sug.teacher}" if sug.teacher else ""
-    question = (
-        f"Según {origin}, esta clase es de «{sug.course_name}»{teacher_txt}. "
-        + ("¿Quieres crear ese curso?" if creates else "¿Guardar el profesor en el curso?")
+    question = f"Según {origin}, esta clase es de «{sug.course_name}»{teacher_txt}. " + (
+        "¿Quieres crear ese curso?" if creates else "¿Guardar el profesor en el curso?"
     )
 
     async def accept() -> None:
@@ -805,21 +820,22 @@ def _teacher_confirmation(svc: AppServices, session: RecordingSession) -> None:
                     ui.label("No se detectaron otras voces en el audio de la clase.").classes(
                         "muted"
                     )
-                for v in others:
+                for n, v in enumerate(others, 1):
+                    voice_id = v.get("voice") or v["label"]
                     with ui.row().classes("items-center w-full"):
-                        ui.label(f"{v['label']} · {duration_text(v['seconds'])} hablando").classes(
+                        ui.label(f"Voz {n} · {duration_text(v['seconds'])} hablando").classes(
                             "flex-1"
                         )
-                        url = clip(v["example_t"], v["example_end"], v["label"].replace(" ", "_"))
+                        url = clip(v["example_t"], v["example_end"], voice_id.replace(" ", "_"))
                         if url:
                             ui.audio(url).style("height:32px;width:180px")
 
-                        async def choose(label: str = v["label"]) -> None:
+                        async def choose(voice: str = voice_id) -> None:
                             await run.io_bound(
                                 svc.finalizer(final_transcriber=_no_asr()).relabel_teacher,
                                 session,
                                 svc.course(session.course_id),
-                                label,
+                                voice,
                             )
                             dlg.close()
                             ui.navigate.reload()

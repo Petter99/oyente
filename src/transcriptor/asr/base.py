@@ -23,7 +23,8 @@ class Segment:
     end: float
     text: str
     channel: Channel = "clase"
-    speaker: str = ""  # "Profesor", "Yo", "Participante 1"...
+    speaker: str = ""  # "Profesor", "Yo", "Participante"... (lo que se muestra)
+    voice: str = ""  # voz detectada («voz_0»…): estable aunque varias se muestren igual
     words: list[Word] = field(default_factory=list)
     avg_logprob: float = 0.0
     no_speech_prob: float = 0.0

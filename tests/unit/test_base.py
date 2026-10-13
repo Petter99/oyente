@@ -202,3 +202,9 @@ def test_hardware_plan_cuda_without_libs_uses_cpu() -> None:
     # En CPU el modelo en vivo debe ir más rápido que el audio (turbo no lo logra).
     assert plan.live_model == "base"
     assert plan.final_model == "large-v3"
+
+
+def test_participants_are_not_numbered_by_default() -> None:
+    from transcriptor.config.models import AppConfig
+
+    assert AppConfig().speakers.distinguish_participants is False
