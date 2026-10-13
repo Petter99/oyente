@@ -361,10 +361,14 @@ def _speakers(svc: AppServices) -> None:
         "confirmar su voz; después se reconoce solo.",
     ):
         ui.switch(
-            "Distinguir entre participantes (Participante 1, 2…)",
+            "Distinguir entre participantes (Participante 1, 2…) — experimental",
             value=s.distinguish_participants,
             on_change=lambda e: (setattr(s, "distinguish_participants", e.value), _saved(svc)),
         )
+        ui.label(
+            "Con la opción apagada, todos los que no son el profesor aparecen como «Participante». "
+            "Al encenderla, una misma persona puede aparecer con varios números."
+        ).classes("small muted2")
         embedder = svc.speaker_embedder()
         auto = getattr(embedder, "default_threshold", 0.6)
         ui.label(
@@ -618,15 +622,17 @@ def _obsidian(svc: AppServices) -> None:
         ).classes("small")
         ui.label(
             "Abrir notas en Obsidian: "
-            + ("disponible" if svc.can_open_in_obsidian else "no disponible (se abren con el sistema)")
+            + (
+                "disponible"
+                if svc.can_open_in_obsidian
+                else "no disponible (se abren con el sistema)"
+            )
         ).classes("small")
         if not svc.can_open_in_obsidian:
             ui.button(
                 "Descargar Obsidian", icon="download", on_click=lambda: open_external(DOWNLOAD_URL)
             ).props("flat")
-    with _section(
-        "Reconstruir relaciones", "Vuelve a analizar tus notas (útil la primera vez)."
-    ):
+    with _section("Reconstruir relaciones", "Vuelve a analizar tus notas (útil la primera vez)."):
 
         async def rebuild() -> None:
             from transcriptor.links.vault import sync_vault

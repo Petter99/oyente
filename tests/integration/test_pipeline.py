@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import socket
 from datetime import datetime
 from pathlib import Path
@@ -267,15 +268,59 @@ def test_reprocess_pending_class_with_llm(tmp_path: Path, vault: Path) -> None:
     assert parse_frontmatter(text)["llm_procesado"] is True
 
 
+def _other_voice(deps: FinalizeDeps, session: RecordingSession) -> str:
+    voices = json.loads((deps.store.dir(session.id) / "voces.json").read_text(encoding="utf-8"))
+    return next(v["voice"] for v in voices if v["label"] != "Profesor")
+
+
 def test_teacher_confirmation_and_relabel(tmp_path: Path, vault: Path) -> None:
     course = Course(name="Cálculo II")
     deps = _deps(tmp_path, vault, NullLLMProvider())
     s = record_class(deps, course, datetime(2026, 10, 12, 18, 0))
     assert s.teacher_needs_confirmation and s.teacher_example_t is not None
     fin = Finalizer(deps)
-    fin.relabel_teacher(s, course, "Participante 1")  # «No, el profesor es esta otra voz»
+    # «No, el profesor es esta otra voz»: se elige por voz, no por el nombre que se muestra.
+    fin.relabel_teacher(s, course, _other_voice(deps, s))
     transcript = get_block((vault / s.note_path).read_text(encoding="utf-8"), "transcripcion") or ""
     first = transcript.splitlines()[0]
-    assert "Participante 1:" in first  # quien era «Profesor» ahora es participante
+    assert "Participante:" in first  # quien era «Profesor» ahora es participante (sin numerar)
     assert deps.profiles.confirmed(course.id, "spectral")
     assert not deps.store.get(s.id).teacher_needs_confirmation  # type: ignore[union-attr]
+
+
+def test_relabel_picks_the_chosen_voice_among_identical_labels(tmp_path: Path, vault: Path) -> None:
+    """Con varios «Participante» iguales, el id de voz decide cuál es el profesor."""
+    course = Course(name="Cálculo II")
+    deps = _deps(tmp_path, vault, NullLLMProvider())
+    s = record_class(deps, course, datetime(2026, 10, 12, 18, 0))
+    work = deps.store.dir(s.id)
+    segs = [seg for seg in deps.store.load_segments(s.id, "final") if seg.channel != "mic"]
+    assert len(segs) >= 4
+    names = ["voz_0", "voz_1", "voz_2"]
+    for i, seg in enumerate(segs):
+        seg.voice = names[i % 3]
+        seg.speaker = "Profesor" if seg.voice == "voz_0" else "Participante"
+    deps.store.save_segments(s.id, segs, "final")
+    voices = []
+    for n, name in enumerate(names):
+        np.save(work / f"{name}.npy", np.full(8, n + 1, dtype=np.float32))
+        voices.append(
+            {
+                "voice": name,
+                "label": "Profesor" if n == 0 else "Participante",
+                "file": f"{name}.npy",
+                "example_t": 0.0,
+                "example_end": 1.0,
+                "seconds": 5.0,
+            }
+        )
+    (work / "voces.json").write_text(json.dumps(voices), encoding="utf-8")
+
+    Finalizer(deps).relabel_teacher(s, course, "voz_2")
+
+    after = [seg for seg in deps.store.load_segments(s.id, "final") if seg.channel != "mic"]
+    assert {seg.voice: seg.speaker for seg in after} == {
+        "voz_0": "Participante",
+        "voz_1": "Participante",
+        "voz_2": "Profesor",
+    }

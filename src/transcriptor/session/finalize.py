@@ -39,7 +39,13 @@ from transcriptor.session.models import ClassSummary, RecordingSession, TaskItem
 from transcriptor.session.store import SessionStore
 from transcriptor.session.suggest import build_suggestion, calendar_hint
 from transcriptor.speakers.embedder import SpeakerEmbedder
-from transcriptor.speakers.identifier import ME, PARTICIPANT, TEACHER, SpeakerIdentifier
+from transcriptor.speakers.identifier import (
+    ME,
+    PARTICIPANT,
+    TEACHER,
+    FinalLabels,
+    SpeakerIdentifier,
+)
 from transcriptor.speakers.profiles import SpeakerProfileStore
 
 log = logging.getLogger(__name__)
@@ -188,47 +194,40 @@ class Finalizer:
                 a, b = int(seg.start * SAMPLE_RATE), int(seg.end * SAMPLE_RATE)
                 embs.append(embedder.embed(audio[a:b]))
             result = ident.label_final(segments, embs)
-            for seg, label in zip(segments, result.labels, strict=True):
+            for seg, label, voice in zip(segments, result.labels, result.assignment, strict=True):
                 seg.speaker = label
+                seg.voice = f"voz_{voice}" if voice is not None else ""
             session.speaker_embedder = embedder.name
             session.teacher_needs_confirmation = result.needs_confirmation
             if result.teacher_cluster is not None and result.clusters:
                 idx, _ = result.clusters[result.teacher_cluster]
                 session.teacher_example_t = segments[idx].start
-            self._save_clusters(session, segments, embs, result)
+            self._save_clusters(session, segments, result)
             ident.learn(result)
         except Exception as exc:
             log.exception("No se pudo identificar a los hablantes")
             session.errors.append(f"Hablantes: {exc}")
 
     def _save_clusters(
-        self,
-        session: RecordingSession,
-        segments: list[Segment],
-        embs: list[np.ndarray | None],
-        result: object,
+        self, session: RecordingSession, segments: list[Segment], result: FinalLabels
     ) -> None:
-        """Guarda los grupos de voces para la confirmación «¿Este es el profesor?»."""
+        """Guarda las voces detectadas para la confirmación «¿Esta es la voz del profesor?»."""
         work = self.d.store.dir(session.id)
-        groups: dict[str, list[int]] = {}
-        for i, seg in enumerate(segments):
-            if seg.channel != "mic":
-                groups.setdefault(seg.speaker, []).append(i)
         info: list[dict] = []
-        for label, idxs in groups.items():
-            vecs = [e for i in idxs if (e := embs[i]) is not None]
-            if not vecs:
+        for c, centroid in enumerate(result.centroids):
+            members = [i for i, a in enumerate(result.assignment) if a == c]
+            if not members:
                 continue
-            centroid = np.mean(np.vstack(vecs), axis=0)
-            np.save(work / f"voz_{len(info)}.npy", centroid.astype(np.float32))
-            longest = max(idxs, key=lambda i: segments[i].end - segments[i].start)
+            np.save(work / f"voz_{c}.npy", centroid.astype(np.float32))
+            longest = max(members, key=lambda i: segments[i].end - segments[i].start)
             info.append(
                 {
-                    "label": label,
-                    "file": f"voz_{len(info)}.npy",
+                    "voice": f"voz_{c}",
+                    "label": segments[members[0]].speaker,
+                    "file": f"voz_{c}.npy",
                     "example_t": segments[longest].start,
                     "example_end": segments[longest].end,
-                    "seconds": sum(segments[i].end - segments[i].start for i in idxs),
+                    "seconds": sum(segments[i].end - segments[i].start for i in members),
                 }
             )
         (work / "voces.json").write_text(json.dumps(info, ensure_ascii=False), encoding="utf-8")
@@ -339,8 +338,9 @@ class Finalizer:
         self.d.bus.emit("session_updated", session_id=session.id)
         return session
 
-    def apply_llm_result(self, session: RecordingSession, course: Course, result: LLMClassSummary,
-                         tokens: int = 0) -> RecordingSession:
+    def apply_llm_result(
+        self, session: RecordingSession, course: Course, result: LLMClassSummary, tokens: int = 0
+    ) -> RecordingSession:
         """Aplica un resumen obtenido aparte (p. ej. del procesamiento por lotes)."""
         segments = self.d.store.load_segments(session.id, "final") or self.d.store.load_segments(
             session.id, "live"
@@ -374,35 +374,38 @@ class Finalizer:
         return session
 
     def relabel_teacher(
-        self, session: RecordingSession, course: Course, teacher_label: str
+        self, session: RecordingSession, course: Course, teacher_voice: str
     ) -> None:
-        """Corrección del usuario: «esta voz es la del profesor»."""
+        """Corrección del usuario: «esta voz es la del profesor».
+
+        ``teacher_voice`` es el id de la voz (``voz_0``…) o, en clases antiguas, su etiqueta.
+        """
         work = self.d.store.dir(session.id)
         voices = json.loads((work / "voces.json").read_text(encoding="utf-8"))
-        chosen = next(v for v in voices if v["label"] == teacher_label)
+        chosen = next(v for v in voices if teacher_voice in (v.get("voice"), v["label"]))
         embedding = np.load(work / chosen["file"])
         if self.d.speaker_embedder is not None:
             self.d.profiles.replace(
                 course.id, self.d.speaker_embedder.name, embedding, confirmed=True
             )
         segments = self.d.store.load_segments(session.id, "final")
+        numbered = self.d.cfg.speakers.distinguish_participants
+        by_voice: dict[str, str] = {}
         n = 0
-        mapping: dict[str, str] = {}
         for v in voices:
-            if v["label"] == teacher_label:
-                mapping[v["label"]] = TEACHER
+            key = v.get("voice") or v["label"]
+            if v is chosen:
+                by_voice[key] = TEACHER
             elif v["label"] == TEACHER or v["label"].startswith(PARTICIPANT):
                 n += 1
-                mapping[v["label"]] = (
-                    f"{PARTICIPANT} {n}"
-                    if self.d.cfg.speakers.distinguish_participants
-                    else PARTICIPANT
-                )
+                by_voice[key] = f"{PARTICIPANT} {n}" if numbered else PARTICIPANT
         for seg in segments:
-            if seg.channel != "mic":
-                seg.speaker = mapping.get(seg.speaker, seg.speaker)
+            if seg.channel == "mic":
+                continue
+            # Con voz guardada se mapea por voz; en clases antiguas, por etiqueta.
+            seg.speaker = by_voice.get(seg.voice or seg.speaker, seg.speaker)
         for v in voices:
-            v["label"] = mapping.get(v["label"], v["label"])
+            v["label"] = by_voice.get(v.get("voice") or v["label"], v["label"])
         (work / "voces.json").write_text(json.dumps(voices, ensure_ascii=False), encoding="utf-8")
         session.teacher_needs_confirmation = False
         self.d.store.save_segments(session.id, segments, "final")

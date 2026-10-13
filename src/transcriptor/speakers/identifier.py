@@ -44,6 +44,10 @@ class FinalLabels:
     # Por grupo: (índice de segmento de ejemplo, segundos hablados) para «¿Es este el profesor?»
     clusters: list[tuple[int, float]]
     teacher_embedding: np.ndarray | None
+    # Voz de cada segmento (índice de grupo; None = micrófono o sin huella) y huella de cada grupo.
+    # Varias voces pueden mostrarse con la misma etiqueta: esto es lo que las distingue.
+    assignment: list[int | None] = field(default_factory=list)
+    centroids: list[np.ndarray] = field(default_factory=list)
 
 
 class SpeakerIdentifier:
@@ -152,6 +156,8 @@ class SpeakerIdentifier:
             needs_confirmation,
             summary,
             clusters[teacher].centroid if teacher is not None else None,
+            assignment,
+            [c.centroid for c in clusters],
         )
 
     def _merge_close(

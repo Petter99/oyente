@@ -68,7 +68,9 @@ class TranscriptionConfig(BaseModel):
 
 
 class SpeakersConfig(BaseModel):
-    distinguish_participants: bool = True
+    # Numerar participantes no es fiable (parte a una persona en varias voces): por defecto
+    # todos son «Participante»; lo útil es separar al profesor del resto.
+    distinguish_participants: bool = False
     # None = umbral recomendado del extractor de voz en uso.
     teacher_threshold: float | None = Field(None, ge=0, le=1)
     use_pyannote: bool = False
