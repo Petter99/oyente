@@ -11,6 +11,7 @@ import logging
 import os
 import platform
 import shutil
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -86,13 +87,14 @@ def is_registered(vault: Path, config_file: Path | None = None) -> bool:
 def obsidian_installed() -> bool:
     system = platform.system()
     if system == "Windows":
-        try:
-            import winreg
+        if sys.platform == "win32":  # mypy solo entiende sys.platform
+            try:
+                import winreg
 
-            with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, "obsidian"):
-                return True
-        except OSError:
-            pass
+                with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, "obsidian"):
+                    return True
+            except OSError:
+                pass
         local = os.environ.get("LOCALAPPDATA")
         return bool(local and (Path(local) / "Programs" / "Obsidian" / "Obsidian.exe").exists())
     if system == "Darwin":
