@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 from nicegui import ui
 
@@ -44,7 +45,7 @@ def workspace_form(svc: AppServices, allow_move: bool = False) -> Callable[[], b
             choice, sub = str(vault), current.resolve().relative_to(vault).as_posix()
     elif vaults:
         choice = str(vaults[0].path)
-    state = {
+    state: dict[str, Any] = {
         "choice": choice,
         "sub": sub,
         "other": other_path,
