@@ -270,7 +270,7 @@ class Finalizer:
     def write_note(self, session: RecordingSession, segments: list[Segment]) -> Path:
         root = self.d.layout.root
         try:
-            sync_vault(self.d.index, root, self.d.cfg.obsidian.excluded_folders)
+            sync_vault(self.d.index, root)
         except Exception:
             log.exception("No se pudo indexar la bóveda")
         path = self.writer.class_note_path(session)
@@ -300,7 +300,7 @@ class Finalizer:
         cfg = self.d.cfg
         dest = None
         if cfg.audio.store_in_vault and session.transcript_dir:
-            dest = self.d.layout.root / session.transcript_dir
+            dest = self.d.layout.transcript_folder(session)
         try:
             res = finalize_audio(
                 audio_files,

@@ -218,16 +218,34 @@ def test_user_notes_mentioned_are_linked(tmp_path: Path, vault: Path) -> None:
     assert "[[Mis apuntes/Regla LIATE|Regla LIATE]] — nota tuya mencionada en clase" in related
 
 
-def test_t6_7_excluded_folders_are_ignored(tmp_path: Path, vault: Path) -> None:
+def test_t6_7_only_the_work_folder_is_read(tmp_path: Path, vault: Path) -> None:
+    """La app trabaja en una subcarpeta de la bóveda: el resto (Privado, Notas…) ni se lee."""
+    (vault / ".obsidian").mkdir()
     private = vault / "Privado" / "Regla LIATE.md"
     private.parent.mkdir()
     private.write_text("secreto", encoding="utf-8")
-    cfg = AppConfig()
-    cfg.obsidian.excluded_folders = ["Privado"]
-    deps = _deps(tmp_path, vault, NullLLMProvider(), cfg)
+    work = vault / "Oyente"
+    work.mkdir()
+    deps = _deps(tmp_path, work, NullLLMProvider())
     s = record_class(deps, Course(name="Cálculo II"), datetime(2026, 10, 12, 18, 0))
-    assert "Privado" not in (vault / s.note_path).read_text(encoding="utf-8")
+    assert "Privado" not in (work / s.note_path).read_text(encoding="utf-8")
     assert all(not p.startswith("Privado") for p in deps.index.all_paths())
+
+
+def test_transcripts_go_to_their_own_folder(tmp_path: Path, vault: Path) -> None:
+    work = vault / "Oyente"
+    work.mkdir()
+    transcripts = tmp_path / "Transcripciones"
+    cfg = AppConfig()
+    cfg.general.transcripts_path = str(transcripts)
+    deps = _deps(tmp_path, work, NullLLMProvider(), cfg)
+    s = record_class(deps, Course(name="Cálculo II"), datetime(2026, 10, 12, 18, 0))
+    folder = deps.layout.transcript_folder(s)
+    assert folder is not None and folder.parent.parent == transcripts
+    assert (folder / "transcripcion.txt").exists() and (folder / "segmentos.json").exists()
+    # El .md queda en la carpeta de trabajo y no hay .txt ahí.
+    assert (work / s.note_path).exists()
+    assert not list(work.rglob("*.txt")) and not list(work.rglob("segmentos.json"))
 
 
 def test_reprocess_pending_class_with_llm(tmp_path: Path, vault: Path) -> None:

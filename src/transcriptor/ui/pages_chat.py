@@ -8,7 +8,7 @@ from nicegui import run, ui
 
 from transcriptor.chat.service import Answer
 from transcriptor.services import AppServices
-from transcriptor.ui.common import empty_state, frame, nice_date, obsidian_uri, open_external, pill
+from transcriptor.ui.common import empty_state, frame, nice_date, open_note, pill
 from transcriptor.ui.pages_main import add_as_dialog
 
 SUGGESTIONS = [
@@ -77,9 +77,7 @@ def chat_page(svc: AppServices, initial: str = "") -> None:
                                     ui.button(
                                         c.label or c.title,
                                         icon="link",
-                                        on_click=lambda c=c: open_external(
-                                            obsidian_uri(svc.vault_root, c.note_path)
-                                        ),
+                                        on_click=lambda c=c: open_note(svc, c.note_path),
                                     ).classes("btn-plain").props("dense no-caps size=sm")
                         foot = (
                             "sin IA · 0 tokens"

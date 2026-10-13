@@ -19,7 +19,7 @@ Este programa incluye los siguientes componentes de código abierto. Los modelos
 - **cffi** 2.1.1 — MIT-0 — https://cffi.readthedocs.io/en/latest/whatsnew.html
 - **charset-normalizer** 3.5.2 — MIT — https://github.com/jawah/charset_normalizer/blob/master/CHANGELOG.md
 - **click** 8.5.0 — BSD-3-Clause — https://github.com/pallets/click/
-- **clr_loader** 0.3.1 — MIT — https://pythonnet.github.io/clr-loader/
+- **clr_loader** 0.3.1 — UNKNOWN — https://pythonnet.github.io/clr-loader/
 - **colorama** 0.4.6 — BSD License — https://github.com/tartley/colorama
 - **comtypes** 1.4.17 — MIT — https://github.com/enthought/comtypes
 - **cryptography** 50.0.2 — Apache-2.0 OR BSD-3-Clause — https://github.com/pyca/cryptography
@@ -84,17 +84,6 @@ Este programa incluye los siguientes componentes de código abierto. Los modelos
 - **pydantic** 2.14.1 — MIT — https://github.com/pydantic/pydantic
 - **pydantic_core** 2.50.1 — MIT — https://github.com/pydantic
 - **Pygments** 2.21.0 — BSD-2-Clause — https://pygments.org
-- **pyobjc-core** 12.2.2 — MIT — https://github.com/ronaldoussoren/pyobjc
-- **pyobjc-framework-AVFoundation** 12.2.2 — MIT — https://github.com/ronaldoussoren/pyobjc
-- **pyobjc-framework-Cocoa** 12.2.2 — MIT — https://github.com/ronaldoussoren/pyobjc
-- **pyobjc-framework-CoreAudio** 12.2.2 — MIT — https://github.com/ronaldoussoren/pyobjc
-- **pyobjc-framework-CoreMedia** 12.2.2 — MIT — https://github.com/ronaldoussoren/pyobjc
-- **pyobjc-framework-libdispatch** 12.2.2 — MIT — https://github.com/ronaldoussoren/pyobjc
-- **pyobjc-framework-Quartz** 12.2.2 — MIT — https://github.com/ronaldoussoren/pyobjc
-- **pyobjc-framework-ScreenCaptureKit** 12.2.2 — MIT — https://github.com/ronaldoussoren/pyobjc
-- **pyobjc-framework-Security** 12.2.2 — MIT — https://github.com/ronaldoussoren/pyobjc
-- **pyobjc-framework-UniformTypeIdentifiers** 12.2.2 — MIT — https://github.com/ronaldoussoren/pyobjc
-- **pyobjc-framework-WebKit** 12.2.2 — MIT — https://github.com/ronaldoussoren/pyobjc
 - **pyparsing** 3.3.3 — MIT — https://github.com/pyparsing/pyparsing/
 - **pystray** 0.19.5 — GNU Lesser General Public License v3 (LGPLv3) — https://github.com/moses-palmer/pystray
 - **python-dateutil** 2.9.0.post0 — Apache Software License; BSD License — https://github.com/dateutil/dateutil
@@ -127,7 +116,6 @@ Este programa incluye los siguientes componentes de código abierto. Los modelos
 - **uritemplate** 4.2.0 — BSD 3-Clause OR Apache-2.0 — https://uritemplate.readthedocs.org
 - **urllib3** 2.8.0 — MIT — https://github.com/urllib3/urllib3/blob/main/CHANGES.rst
 - **uvicorn** 0.54.0 — BSD-3-Clause — https://uvicorn.dev/
-- **uvloop** 0.23.0 — Apache Software License; MIT License
 - **watchdog** 6.0.0 — Apache Software License — https://github.com/gorakhargosh/watchdog
 - **watchfiles** 1.3.0 — MIT License — https://github.com/samuelcolvin/watchfiles
 - **webencodings** 0.6.1 — BSD License — https://github.com/CourtBouillon/webencodings

@@ -23,7 +23,7 @@ async def test_t5_1_navigation_all_sections(user: User) -> None:
         ("/configuracion?tab=transcripcion", "Modelo de voz"),
         ("/configuracion?tab=hablantes", "Identificar al profesor"),
         ("/configuracion?tab=obsidian", "Relaciones automáticas"),
-        ("/configuracion?tab=general", "Carpeta compartida"),
+        ("/configuracion?tab=general", "Dónde se guardan tus clases"),
     ]:
         await user.open(path)
         await user.should_see(text)

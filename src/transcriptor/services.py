@@ -124,6 +124,21 @@ class AppServices:
         return VaultLayout.from_config(self.cfg, self.vault_root)
 
     @property
+    def obsidian_vault(self) -> Path | None:
+        """Bóveda de Obsidian que contiene la carpeta de trabajo (None si no hay)."""
+        from transcriptor.links.obsidian_env import find_vault
+
+        return find_vault(self.vault_root)
+
+    @property
+    def can_open_in_obsidian(self) -> bool:
+        """Obsidian instalado y la carpeta de trabajo dentro de una bóveda que Obsidian conoce."""
+        from transcriptor.links.obsidian_env import is_registered, obsidian_installed
+
+        vault = self.obsidian_vault
+        return vault is not None and obsidian_installed() and is_registered(vault)
+
+    @property
     def index(self) -> SearchIndex:
         if self._index is None:
             from transcriptor.nlp.embed import default_text_embedder
@@ -659,7 +674,7 @@ class AppServices:
                 if self.cfg.general.vault_path:
                     from transcriptor.links.vault import sync_vault
 
-                    sync_vault(self.index, self.vault_root, self.cfg.obsidian.excluded_folders)
+                    sync_vault(self.index, self.vault_root)
                 self.sync_google_tasks()
             except Exception:
                 log.exception("Error en el mantenimiento inicial")

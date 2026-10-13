@@ -81,7 +81,39 @@ def obsidian_uri(vault_root: Path, note_rel: str) -> str:
     return "obsidian://open?path=" + quote((vault_root / note_rel).as_posix(), safe="")
 
 
+def open_path(path: Path) -> None:
+    """Abre un archivo con la aplicación predeterminada del sistema."""
+    system = platform.system()
+    if system == "Darwin":
+        subprocess.Popen(["open", str(path)])
+    elif system == "Windows":
+        os.startfile(str(path))  # type: ignore[attr-defined]
+    else:
+        subprocess.Popen(["xdg-open", str(path)])
+
+
+def open_note(svc: AppServices, note_rel: str) -> None:
+    """Abre una nota: en Obsidian si se puede; si no, con el programa del sistema.
+
+    Nunca falla en silencio: si la nota no existe o no hay con qué abrirla, avisa.
+    """
+    path = svc.vault_root / note_rel
+    if not path.exists():
+        ui.notify("No se encontró la nota en la carpeta", type="warning")
+        return
+    try:
+        if svc.can_open_in_obsidian:
+            open_external(obsidian_uri(svc.vault_root, note_rel))
+        else:
+            open_path(path)
+    except Exception as exc:
+        ui.notify(f"No se pudo abrir la nota: {exc}", type="negative")
+
+
 def reveal_in_folder(path: Path) -> None:
+    if not path.exists():
+        ui.notify("El archivo ya no está en esa carpeta", type="warning")
+        return
     system = platform.system()
     if system == "Darwin":
         subprocess.Popen(["open", "-R", str(path)])

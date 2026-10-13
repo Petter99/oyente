@@ -35,6 +35,7 @@ class MemoryKeyring(KeyringBackend):
 def isolated_home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     home = tmp_path / "home"
     monkeypatch.setenv("TRANSCRIPTOR_HOME", str(home))
+    monkeypatch.setenv("TRANSCRIPTOR_OBSIDIAN_CONFIG", str(tmp_path / "sin-obsidian.json"))
     return home
 
 

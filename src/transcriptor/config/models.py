@@ -37,7 +37,10 @@ class Course(BaseModel):
 
 
 class GeneralConfig(BaseModel):
-    vault_path: str | None = None
+    vault_path: str | None = None  # carpeta de trabajo: la única a la que la app accede
+    # Carpeta de transcripciones (.txt + segmentos.json), separada de las notas .md.
+    # None = comportamiento anterior (dentro de la carpeta de cada curso).
+    transcripts_path: str | None = None
     classes_folder: str = "Clases"
     topics_folder: str = "Temas"
     teachers_folder: str = "Profesores"
@@ -116,6 +119,7 @@ class ObsidianConfig(BaseModel):
     # None = umbral recomendado del modelo de embeddings en uso.
     related_threshold: float | None = Field(None, ge=0, le=1)
     related_max: int = Field(5, ge=0, le=20)
+    # En desuso: la app solo lee su carpeta de trabajo. Se conserva para no romper configs viejas.
     excluded_folders: list[str] = Field(default_factory=list)
 
 

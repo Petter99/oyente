@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import platform
-from pathlib import Path
 
 from nicegui import run, ui
 
@@ -11,9 +10,9 @@ from transcriptor.audio.decode import estimate_mb
 from transcriptor.calendar.google_auth import GoogleNotConfiguredError
 from transcriptor.services import AppServices
 from transcriptor.ui.common import banner, open_external
-from transcriptor.ui.pages_settings import pick_folder
+from transcriptor.ui.workspace import workspace_form
 
-STEPS = ["Carpeta", "Cursos", "IA", "Google", "Audio", "Obsidian"]
+STEPS = ["Carpeta", "Cursos", "IA", "Google", "Audio", "Relaciones"]
 
 
 def onboarding_page(svc: AppServices) -> None:
@@ -106,30 +105,15 @@ def onboarding_page(svc: AppServices) -> None:
     def step_folder() -> None:
         title(
             f"Bienvenido a {svc.brand()}",
-            "Elige la carpeta donde se guardarán tus clases. Puede ser tu bóveda "
-            "de Obsidian, dentro de Google Drive, OneDrive, Dropbox o iCloud.",
+            "Elige dónde se guardarán tus clases. Recomendamos una bóveda de Obsidian: la app crea "
+            "su propia subcarpeta y solo accede a ella. Puede estar en Google Drive, OneDrive, "
+            "Dropbox o iCloud.",
         )
-        path = ui.input(
-            "Carpeta", value=svc.cfg.general.vault_path or str(Path.home() / "Documents" / "Clases")
-        ).classes("w-full q-mt-md")
-
-        async def browse() -> None:
-            chosen = await pick_folder(path.value)
-            if chosen:
-                path.set_value(chosen)
-
-        ui.button("Examinar…", on_click=browse).classes("btn-plain")
-        ui.label("Si la carpeta no existe, se creará.").classes("small muted")
+        with ui.column().classes("w-full q-mt-md gap-1"):
+            save_workspace = workspace_form(svc)
 
         async def save() -> bool:
-            value = (path.value or "").strip()
-            if not value:
-                ui.notify("Elige una carpeta", type="warning")
-                return False
-            Path(value).mkdir(parents=True, exist_ok=True)
-            svc.cfg.general.vault_path = value
-            svc.save_config()
-            return True
+            return save_workspace()
 
         nav(back=False, skip=False, on_next=save)
 
@@ -324,26 +308,28 @@ def onboarding_page(svc: AppServices) -> None:
     # 6 ------------------------------------------------------------ Obsidian
     def step_obsidian() -> None:
         title(
-            "Relaciones con Obsidian",
+            "Relaciones entre tus clases",
             "Cada clase nueva se enlazará con su curso, la clase anterior, el "
-            "profesor, los temas y tus propias notas. Tu texto nunca se modifica.",
+            "profesor y los temas. Tu texto nunca se modifica.",
         )
-        chips = ui.input_chips(
-            "Carpetas a excluir (p. ej. Diario, Privado)",
-            value=list(svc.cfg.obsidian.excluded_folders),
-        ).classes("w-full q-mt-md")
+        ui.label(f"La app trabaja solo en: {svc.vault_root}").classes("muted q-mt-md")
+        if svc.can_open_in_obsidian:
+            banner("ok", "Obsidian detectado: podrás abrir cada nota con un clic.", "check_circle")
+        else:
+            banner(
+                "info",
+                "Sin Obsidian las notas se guardan igual como archivos .md. Instálalo (es gratis) "
+                "para abrirlas con un clic y ver el grafo de relaciones.",
+                "info",
+            )
         result = ui.label("").classes("muted")
 
         async def analyze() -> bool:
             from transcriptor.links.vault import sync_vault
 
-            svc.cfg.obsidian.excluded_folders = list(chips.value or [])
-            svc.save_config()
-            result.set_text("Analizando tu bóveda…")
+            result.set_text("Analizando tus notas…")
             try:
-                n = await run.io_bound(
-                    sync_vault, svc.index, svc.vault_root, svc.cfg.obsidian.excluded_folders
-                )
+                n = await run.io_bound(sync_vault, svc.index, svc.vault_root)
                 ui.notify(f"{n} notas analizadas", type="positive")
             except Exception as exc:  # un fallo del análisis no debe dejar al usuario atascado
                 ui.notify(
@@ -354,9 +340,6 @@ def onboarding_page(svc: AppServices) -> None:
                 )
             return True
 
-        ui.label(
-            "Si no quieres excluir ninguna carpeta, deja la lista vacía y pulsa Terminar."
-        ).classes("small muted")
         nav(skip=False, next_label="Terminar", on_next=analyze)
 
     render()

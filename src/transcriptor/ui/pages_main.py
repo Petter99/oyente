@@ -25,8 +25,7 @@ from transcriptor.ui.common import (
     highlight_doubts,
     long_date,
     nice_date,
-    obsidian_uri,
-    open_external,
+    open_note,
     pill,
     reveal_in_folder,
     speaker_label,
@@ -415,14 +414,23 @@ def class_page(svc: AppServices, session_id: str) -> None:
         ).classes("btn-plain")
         if session.note_path:
             ui.button(
-                "Abrir en Obsidian",
+                "Abrir en Obsidian" if svc.can_open_in_obsidian else "Abrir nota",
                 icon="open_in_new",
-                on_click=lambda: open_external(obsidian_uri(svc.vault_root, session.note_path)),
+                on_click=lambda: open_note(svc, session.note_path),
             ).classes("btn-plain")
-            ui.button(
-                icon="folder_open",
-                on_click=lambda: reveal_in_folder(svc.vault_root / session.note_path),
-            ).props('flat aria-label="Mostrar en la carpeta"')
+            txt_folder = svc.layout().transcript_folder(session)
+            with ui.button("Archivos", icon="folder_open").classes("btn-plain"):
+                with ui.menu():
+                    ui.menu_item(
+                        "Mostrar .md en la carpeta",
+                        on_click=lambda: reveal_in_folder(svc.vault_root / session.note_path),
+                    )
+                    item = ui.menu_item(
+                        "Mostrar .txt en la carpeta",
+                        on_click=lambda: reveal_in_folder(txt_folder / "transcripcion.txt"),
+                    )
+                    if txt_folder is None:
+                        item.props("disable")
 
     subtitle = (
         f"{session.course_name} · {nice_date(session.day)} · {duration_text(session.duration_s)}"
@@ -546,9 +554,9 @@ def _obsidian_line(svc: AppServices, line: str) -> None:
     target, alias = m.group(1), m.group(2) or m.group(1).split("/")[-1]
     rest = line[m.end() :].strip(" —-")
     with ui.row().classes("items-center gap-1 no-wrap"):
-        ui.link(alias, "#").on(
-            "click.prevent", lambda t=target: open_external(obsidian_uri(svc.vault_root, t + ".md"))
-        ).classes("small")
+        ui.link(alias, "#").on("click.prevent", lambda t=target: open_note(svc, t + ".md")).classes(
+            "small"
+        )
         if rest:
             ui.label(f"— {rest}").classes("small muted")
 
